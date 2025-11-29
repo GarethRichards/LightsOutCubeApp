@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11222.16 d18.3
+VisualStudioVersion = 18.3.11222.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightsOutCube", "..\LightsOutCube2\LightsOutCube.csproj", "{9555AA23-3385-474E-B1EC-2722AB5D8033}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightsOutCube", "src\LightsOutCube.csproj", "{9555AA23-3385-474E-B1EC-2722AB5D8033}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightsOutCube.Tests", "LightsOutCube.Tests\LightsOutCube.Tests.csproj", "{FAB1A1DB-F640-C9FD-4B3A-419524C66DC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{9555AA23-3385-474E-B1EC-2722AB5D8033}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9555AA23-3385-474E-B1EC-2722AB5D8033}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9555AA23-3385-474E-B1EC-2722AB5D8033}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAB1A1DB-F640-C9FD-4B3A-419524C66DC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAB1A1DB-F640-C9FD-4B3A-419524C66DC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAB1A1DB-F640-C9FD-4B3A-419524C66DC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAB1A1DB-F640-C9FD-4B3A-419524C66DC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

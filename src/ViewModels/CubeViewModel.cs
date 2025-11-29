@@ -110,6 +110,28 @@ namespace LightsOutCube.ViewModels
             }
         }
         // Observable puzzle list for binding
+        public void PuzzleSolved()
+        {
+            SelectedPuzzle++;
+        }
         public ObservableCollection<int> PuzzleList { get; }
+
+        Color _gradientStart = Colors.DarkBlue;
+        public Color GradientStart
+        {
+            get => _gradientStart;
+            set => SetProperty(ref _gradientStart, value);
+        }
+        Color _gradientEnd = Colors.Black;
+        public Color GradientEnd
+        {
+            get => _gradientEnd;
+            set => SetProperty(ref _gradientEnd, value);
+        }
+        double _CubeSize = 3.04;
+        public double CubeSize
+        {
+            get => _CubeSize;
+        }
     }
 }

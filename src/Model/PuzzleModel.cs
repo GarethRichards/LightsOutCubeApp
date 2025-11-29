@@ -48,7 +48,7 @@ namespace LightsOutCube.Model
             XmlNode n = puzzles.FirstChild;
             if (iPuzzle < 1 || iPuzzle > n.ChildNodes.Count) throw new ArgumentOutOfRangeException(nameof(iPuzzle));
             XmlNode p = n.ChildNodes[iPuzzle - 1];
-
+            State = 0;
             for (int i = 0; i < p.ChildNodes.Count; i++)
             {
                 int but = Convert.ToInt32(p.ChildNodes[i].InnerText);

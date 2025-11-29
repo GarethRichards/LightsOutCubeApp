@@ -9,41 +9,14 @@
         Loaded="OnLoaded"
         MouseLeftButtonDown="OnClick"
         Title="Lights Out Cube"
-        Height="450" Width="800">
+        Height="500" Width="500">
     <DockPanel>
-        <StackPanel>
-            <Grid Width="170" Height="170">
-                <Grid.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <LinearGradientBrush.GradientStops>
-                            <GradientStop Color="Black" Offset="0"/>
-                            <GradientStop Color="Red" Offset="1"/>
-                        </LinearGradientBrush.GradientStops>
-                    </LinearGradientBrush>
-                </Grid.Background>
-                <Viewport3D Name="myViewport2" ClipToBounds="True" Grid.Row="0" Grid.Column="0" />
-                <Border Name="myElement" Background="Transparent" Grid.Row="0" Grid.Column="0" />
-            </Grid>
-
-            <TextBox Margin="10" Text="{Binding ElementName=CubeSize, Path=Value}"></TextBox>
-            <Button Margin="10"
-              Width="100"  Command="{Binding ResetCommand}">Reset</Button>
-            <Slider Name="XSlider" Maximum="360.0" Minimum="-360.0" Value="0" ValueChanged="XValueChanged" />
-            <Slider Name="YSlider" Maximum="360.0" Minimum="-360.0" Value="0" ValueChanged="YValueChanged"/>
-            <Slider Name="ZSlider" Maximum="360.0" Minimum="-360.0" Value="0" ValueChanged="ZValueChanged"/>
-            <Slider Name="CubeSize" Maximum="5" Minimum="0" Value="3.04" />
-            <Slider Name="CubeOpacity" Maximum="1.0" Minimum="0.0" Value=".5" />
-            <ComboBox Name="PuzzleCombo" ItemsSource="{Binding PuzzleList}" 
-                      SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}"></ComboBox>
-            <TextBlock Margin="10" Name="valueFromTask2"/>
-
-        </StackPanel>
-        <Grid>
+        <Grid Name="MainGrid">
             <Grid.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                     <LinearGradientBrush.GradientStops>
-                        <GradientStop Color="Black" Offset="0"/>
-                        <GradientStop Color="DarkBlue" Offset="1"/>
+                        <GradientStop Color="{Binding GradientStart}" Offset="0"/>
+                        <GradientStop Color="{Binding GradientEnd}" Offset="1"/>
                     </LinearGradientBrush.GradientStops>
                 </LinearGradientBrush>
             </Grid.Background>
@@ -107,7 +80,7 @@
 
                         <ModelVisual3D.Transform>
                             <Transform3DGroup >
-                                <ScaleTransform3D ScaleX="{Binding ElementName=CubeSize, Path=Value}"  ScaleY="{Binding ElementName=CubeSize, Path=Value}" ScaleZ="{Binding ElementName=CubeSize, Path=Value}" />
+                                <ScaleTransform3D ScaleX="{Binding CubeSize}"  ScaleY="{Binding CubeSize}" ScaleZ="{Binding CubeSize}" />
                             </Transform3DGroup >
                         </ModelVisual3D.Transform>
                     </ModelVisual3D>
@@ -116,16 +89,71 @@
             </Viewport3D>
             <!-- Transparent overlay text. Set IsHitTestVisible='False' so mouse events pass to myViewport. -->
             <TextBlock Name="OverlayText"
-                           Text="Drag to rotate — Left mouse"
-                           FontSize="16"
+                       Text="Drag to rotate — Left mouse"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="White"
+                       Opacity="0.85"
+                       Margin="12"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Top"
+                       Background="Transparent"
+                       IsHitTestVisible="False" />
+
+            <!-- Puzzle combo + Reset overlay: bottom-left, transparent background so scene remains visible.
+                 Keep IsHitTestVisible='True' so user can interact. -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="12"
+                        Background="Transparent"
+                        IsHitTestVisible="True">
+                <TextBlock Text="Puzzle:"
+                           FontSize="14"
                            FontWeight="SemiBold"
-                           Foreground="White"
-                           Opacity="0.85"
-                           Margin="12"
-                           HorizontalAlignment="Left"
-                           VerticalAlignment="Top"
-                           Background="Transparent"
-                           IsHitTestVisible="False" />
+                           Foreground="Gray"
+                           Opacity="0.75"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0"
+                           ToolTip="Select puzzle" />
+                <ComboBox x:Name="PuzzleComboOverlay"
+                          ItemsSource="{Binding PuzzleList}"
+                          SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}"
+                          Width="70"
+                          Background="Transparent"
+                          BorderBrush="Transparent"
+                          Foreground="Gray"
+                          Opacity="0.75"
+                          Padding="6"
+                          ToolTip="Select puzzle" />
+                <Button x:Name="ResetButtonOverlay"
+                        Command="{Binding ResetCommand}"
+                        Content="Reset"
+                        Margin="8,0,0,0"
+                        Width="72"
+                        Background="Transparent"
+                        BorderBrush="White"
+                        BorderThickness="1"
+                        Foreground="Gray"
+                        Opacity="0.75"
+                        Padding="6"
+                        ToolTip="Reset puzzle" />
+            </StackPanel>
+
+            <!-- Solved banner: hidden by default -->
+            <TextBlock x:Name="SolvedBanner"
+                       Text=""
+                       FontSize="28"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       Background="#AA000000"
+                       Padding="12,8"
+                       Visibility="Collapsed"
+                       Opacity="0"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       Margin="0,24,0,0"
+                       IsHitTestVisible="False"/>
         </Grid>
 
     </DockPanel>

@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("LightsOutCube2")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("LightsOutCube")]
+[assembly: AssemblyDescription("LightsOut Cube App")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("LightsOutCube2")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCompany("Gareth Richards")]
+[assembly: AssemblyProduct("LightsOutCube")]
+[assembly: AssemblyCopyright("Copyright © 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 1. Dusk Glow -->
+    <LinearGradientBrush x:Key="Gradient_DuskGlow" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF0F2027" Offset="0.0"/>
+        <GradientStop Color="#FF203A43" Offset="0.5"/>
+        <GradientStop Color="#FF2C5364" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 2. Sunset Coral -->
+    <LinearGradientBrush x:Key="Gradient_SunsetCoral" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFF6A88" Offset="0.0"/>
+        <GradientStop Color="#FFFF8A00" Offset="0.6"/>
+        <GradientStop Color="#FFFFC371" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 3. Deep Ocean -->
+    <LinearGradientBrush x:Key="Gradient_DeepOcean" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF021B79" Offset="0.0"/>
+        <GradientStop Color="#FF0575E6" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 4. Purple Cosmos -->
+    <LinearGradientBrush x:Key="Gradient_PurpleCosmos" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF20002C" Offset="0.0"/>
+        <GradientStop Color="#FFCBB4D4" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 5. Emerald Teal -->
+    <LinearGradientBrush x:Key="Gradient_EmeraldTeal" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF0F9B8E" Offset="0.0"/>
+        <GradientStop Color="#FF00C6AE" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 6. Warm Sunrise -->
+    <LinearGradientBrush x:Key="Gradient_WarmSunrise" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFF5F6D" Offset="0.0"/>
+        <GradientStop Color="#FFFFC371" Offset="1.0"/>
+    </LinearGradientBrush>
+
+</ResourceDictionary>

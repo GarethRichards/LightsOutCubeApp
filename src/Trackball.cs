@@ -197,7 +197,6 @@ namespace _3DTools
             Quaternion delta = new Quaternion(axis, -angle);
 
             // Get the current orientantion from the RotateTransform3D
-            AxisAngleRotation3D r = _rotation;
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
 
             // Compose the delta with the previous orientation
@@ -215,7 +214,6 @@ namespace _3DTools
             Quaternion delta = new Quaternion(axis, -angle);
 
             // Get the current orientantion from the RotateTransform3D
-            AxisAngleRotation3D r = _rotation;
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
 
             // Compose the delta with the previous orientation
@@ -233,7 +231,6 @@ namespace _3DTools
             Quaternion delta = new Quaternion(axis, -angle);
 
             // Get the current orientantion from the RotateTransform3D
-            AxisAngleRotation3D r = _rotation;
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
 
             // Compose the delta with the previous orientation

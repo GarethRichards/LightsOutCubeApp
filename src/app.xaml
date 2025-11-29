@@ -157,5 +157,10 @@ Positions="-0.5,-0.5,-0.5
             </LinearGradientBrush>
           </DiffuseMaterial.Brush>       </DiffuseMaterial> -->
         </MaterialGroup>
+        <ResourceDictionary x:Key="MergedGradients">
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Gradients.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

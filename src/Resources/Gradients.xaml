@@ -39,4 +39,11 @@
         <GradientStop Color="#FFFFC371" Offset="1.0"/>
     </LinearGradientBrush>
 
+    <!-- 7. Animated sky -->
+    <LinearGradientBrush x:Key="Gradient_Animated_Sky" StartPoint="0,0" EndPoint="1,0" MappingMode="RelativeToBoundingBox">
+        <GradientStop Color="#FF0F2027" Offset="0.0"/>
+        <GradientStop Color="#FF203A43" Offset="0.5"/>
+        <GradientStop Color="#FF2C5364" Offset="1.0"/>
+    </LinearGradientBrush>
+
 </ResourceDictionary>

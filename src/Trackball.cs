@@ -29,36 +29,6 @@ namespace _3DTools
     ///     Trackball is a utility class which observes the mouse events
     ///     on a specified FrameworkElement and produces a Transform3D
     ///     with the resultant rotation and scale.
-    /// 
-    ///     Example Usage:
-    /// 
-    ///         Trackball trackball = new Trackball();
-    ///         trackball.EventSource = myElement;
-    ///         myViewport3D.Camera.Transform = trackball.Transform;
-    /// 
-    ///     Because Viewport3Ds only raise events when the mouse is over the
-    ///     rendered 3D geometry (as opposed to not when the mouse is within
-    ///     the layout bounds) you usually want to use another element as 
-    ///     your EventSource.  For example, a transparent border placed on
-    ///     top of your Viewport3D works well:
-    ///     
-    ///         <Grid>
-    ///           <ColumnDefinition />
-    ///           <RowDefinition />
-    ///           <Viewport3D Name="myViewport" ClipToBounds="True" Grid.Row="0" Grid.Column="0" />
-    ///           <Border Name="myElement" Background="Transparent" Grid.Row="0" Grid.Column="0" />
-    ///         </Grid>
-    ///     
-    ///     NOTE: The Transform property may be shared by multiple Cameras
-    ///           if you want to have auxilary views following the trackball.
-    /// 
-    ///           It can also be useful to share the Transform property with
-    ///           models in the scene that you want to move with the camera.
-    ///           (For example, the Trackport3D's headlight is implemented
-    ///           this way.)
-    /// 
-    ///           You may also use a Transform3DGroup to combine the
-    ///           Transform property with additional Transforms.
     /// </summary>
     public class Trackball
     {
@@ -69,6 +39,9 @@ namespace _3DTools
         private ScaleTransform3D _scale = new ScaleTransform3D();
         private AxisAngleRotation3D _rotation = new AxisAngleRotation3D();
 
+        // tracking state to avoid using stale positions if capture is lost
+        private bool _isTracking = false;
+
         public Trackball(Transform3DGroup Group)
         {
             Group.Children.Add(_scale);
@@ -76,19 +49,13 @@ namespace _3DTools
         }
 
         /// <summary>
-        ///     A transform to move the camera or scene to the trackball's
-        ///     current orientation and scale.
-        /// </summary>
-
-        #region Event Handling
-
-        /// <summary>
         ///     The FrameworkElement we listen to for mouse events.
+        ///     Subscribes to extra events to keep state in sync (LostMouseCapture / MouseLeave).
         /// </summary>
         public FrameworkElement EventSource
         {
             get { return _eventSource; }
-            
+
             set
             {
                 if (_eventSource != null)
@@ -96,19 +63,29 @@ namespace _3DTools
                     _eventSource.MouseDown -= this.OnMouseDown;
                     _eventSource.MouseUp -= this.OnMouseUp;
                     _eventSource.MouseMove -= this.OnMouseMove;
+                    _eventSource.LostMouseCapture -= this.OnLostMouseCapture;
+                    _eventSource.MouseLeave -= this.OnMouseLeave;
                 }
 
                 _eventSource = value;
 
-                _eventSource.MouseDown += this.OnMouseDown;
-                _eventSource.MouseUp += this.OnMouseUp;
-                _eventSource.MouseMove += this.OnMouseMove;
+                if (_eventSource != null)
+                {
+                    _eventSource.MouseDown += this.OnMouseDown;
+                    _eventSource.MouseUp += this.OnMouseUp;
+                    _eventSource.MouseMove += this.OnMouseMove;
+                    _eventSource.LostMouseCapture += this.OnLostMouseCapture;
+                    _eventSource.MouseLeave += this.OnMouseLeave;
+                }
             }
         }
 
         private void OnMouseDown(object sender, MouseEventArgs e)
         {
+            // Start a tracking session
             Mouse.Capture(EventSource, CaptureMode.Element);
+            _isTracking = true;
+
             _previousPosition2D = e.GetPosition(EventSource);
             _previousPosition3D = ProjectToTrackball(
                 EventSource.ActualWidth,
@@ -118,27 +95,93 @@ namespace _3DTools
 
         private void OnMouseUp(object sender, MouseEventArgs e)
         {
+            // End tracking
             Mouse.Capture(EventSource, CaptureMode.None);
+            _isTracking = false;
+        }
+
+        private void OnLostMouseCapture(object sender, MouseEventArgs e)
+        {
+            // Lost capture -> cancel tracking to avoid a big jump next time.
+            // Also update previous positions to current mouse pos so resuming doesn't jump.
+            try
+            {
+                if (_eventSource != null)
+                {
+                    var p = Mouse.GetPosition(_eventSource);
+                    _previousPosition2D = p;
+                    _previousPosition3D = ProjectToTrackball(_eventSource.ActualWidth, _eventSource.ActualHeight, p);
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            _isTracking = false;
+        }
+
+        private void OnMouseLeave(object sender, MouseEventArgs e)
+        {
+            // If the user leaves the EventSource while not pressing, cancel tracking.
+            if (Mouse.LeftButton != MouseButtonState.Pressed && Mouse.RightButton != MouseButtonState.Pressed)
+            {
+                _isTracking = false;
+            }
+            else
+            {
+                // If buttons are still pressed, refresh previous positions to avoid a jump when re-entering.
+                try
+                {
+                    if (_eventSource != null)
+                    {
+                        var p = Mouse.GetPosition(_eventSource);
+                        _previousPosition2D = p;
+                        _previousPosition3D = ProjectToTrackball(_eventSource.ActualWidth, _eventSource.ActualHeight, p);
+                    }
+                }
+                catch { }
+            }
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             Point currentPosition = e.GetPosition(EventSource);
 
-            // Prefer tracking to zooming if both buttons are pressed.
+            // If left button is pressed but we are not tracking (capture was lost/ interrupted),
+            // initialize the previous positions so we resume cleanly on the next movement.
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                Track(currentPosition);
+                if (!_isTracking)
+                {
+                    // start a fresh tracking baseline and skip applying a rotation for this frame
+                    _previousPosition2D = currentPosition;
+                    _previousPosition3D = ProjectToTrackball(EventSource.ActualWidth, EventSource.ActualHeight, currentPosition);
+                    _isTracking = true;
+                }
+                else
+                {
+                    Track(currentPosition);
+                }
             }
             else if (e.RightButton == MouseButtonState.Pressed)
             {
+                // allow zoom even if _isTracking is false (right-button zoom)
+                if (!_isTracking)
+                {
+                    _previousPosition2D = currentPosition;
+                    _isTracking = true;
+                }
                 Zoom(currentPosition);
+            }
+            else
+            {
+                // no button pressed -> ensure tracking is off
+                _isTracking = false;
             }
 
             _previousPosition2D = currentPosition;
         }
-
-        #endregion Event Handling
 
         private void Track(Point currentPosition)
         {
@@ -147,34 +190,71 @@ namespace _3DTools
 
             Vector3D axis = Vector3D.CrossProduct(_previousPosition3D, currentPosition3D);
             double angle = Vector3D.AngleBetween(_previousPosition3D, currentPosition3D);
-            if (angle == 0)
+
+            // Defensive guards: ignore tiny/invalid deltas and extremely large jumps
+            if (double.IsNaN(angle) || angle == 0.0)
                 return;
+
+            // If axis is degenerate, ignore this frame
+            if (axis.LengthSquared < 1e-8 || double.IsNaN(axis.X) || double.IsNaN(axis.Y) || double.IsNaN(axis.Z))
+            {
+                _previousPosition3D = currentPosition3D;
+                return;
+            }
+
+            // Normalize axis before creating quaternion
+            axis.Normalize();
+
+            // Clamp angle to avoid giant jumps caused by stale previous position
+            const double maxAngleDeg = 45.0;
+            if (angle > maxAngleDeg)
+                angle = maxAngleDeg;
+
+            // Create the delta quaternion (note sign kept as before)
             Quaternion delta = new Quaternion(axis, -angle);
 
-            // Get the current orientantion from the RotateTransform3D
-            AxisAngleRotation3D r = _rotation;
+            // Compose *before* the current orientation (pre-multiply) so the delta
+            // is applied in world coordinates rather than object-local coordinates.
+            // This avoids the "weird" flips when the object already has a large rotation.
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
+            q = delta * q;
 
-            // Compose the delta with the previous orientation
-            q *= delta;
+            // guard against invalid quaternion results
+            if (double.IsNaN(q.X) || double.IsNaN(q.Y) || double.IsNaN(q.Z) || double.IsNaN(q.W))
+            {
+                _previousPosition3D = currentPosition3D;
+                return;
+            }
 
-            // Write the new orientation back to the Rotation3D
-            _rotation.Axis = q.Axis;
-            _rotation.Angle = q.Angle;
+            q.Normalize();
+
+            var newAxis = q.Axis;
+            var newAngle = q.Angle;
+            if (!double.IsNaN(newAxis.X) && !double.IsNaN(newAxis.Y) && !double.IsNaN(newAxis.Z) && !double.IsNaN(newAngle))
+            {
+                _rotation.Axis = newAxis;
+                _rotation.Angle = newAngle;
+            }
 
             _previousPosition3D = currentPosition3D;
         }
 
         private Vector3D ProjectToTrackball(double width, double height, Point point)
         {
-            double x = point.X / (width / 2);    // Scale so bounds map to [0,0] - [2,2]
-            double y = point.Y / (height / 2);
+            // Use the smaller viewport dimension so the virtual trackball stays circular
+            double minDim = Math.Min(width, height);
+            if (minDim <= 0) return new Vector3D(0, 0, 1);
 
-            x = x - 1;                           // Translate 0,0 to the center
-            y = 1 - y;                           // Flip so +Y is up instead of down
+            // Map pixel to [-1,1] centered coordinates using minDim
+            double x = (point.X - width * 0.5) / (minDim * 0.5);
+            double y = (height * 0.5 - point.Y) / (minDim * 0.5); // +Y up
 
-            double z2 = 1 - x * x - y * y;       // z^2 = 1 - x^2 - y^2
-            double z = z2 > 0 ? Math.Sqrt(z2) : 0;
+            // Flip horizontal direction to match expected drag feel (tweak/remove if you prefer inverted)
+            x = -x;
+
+            // Compute z on unit sphere (or clamp to disk)
+            double r2 = x * x + y * y;
+            double z = r2 <= 1.0 ? Math.Sqrt(1.0 - r2) : 0.0;
 
             return new Vector3D(x, y, z);
         }
@@ -182,7 +262,7 @@ namespace _3DTools
         private void Zoom(Point currentPosition)
         {
             double yDelta = currentPosition.Y - _previousPosition2D.Y;
-            
+
             double scale = Math.Exp(yDelta / 100);    // e^(yDelta/100) is fairly arbitrary.
 
             _scale.ScaleX *= scale;
@@ -196,13 +276,10 @@ namespace _3DTools
             double angle = x;
             Quaternion delta = new Quaternion(axis, -angle);
 
-            // Get the current orientantion from the RotateTransform3D
+            // pre-multiply so the rotation is in world space
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
-
-            // Compose the delta with the previous orientation
-            q *= delta;
-
-            // Write the new orientation back to the Rotation3D
+            q = delta * q;
+            q.Normalize();
             _rotation.Axis = q.Axis;
             _rotation.Angle = q.Angle;
         }
@@ -213,13 +290,9 @@ namespace _3DTools
             double angle = y;
             Quaternion delta = new Quaternion(axis, -angle);
 
-            // Get the current orientantion from the RotateTransform3D
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
-
-            // Compose the delta with the previous orientation
-            q *= delta;
-
-            // Write the new orientation back to the Rotation3D
+            q = delta * q;
+            q.Normalize();
             _rotation.Axis = q.Axis;
             _rotation.Angle = q.Angle;
         }
@@ -230,13 +303,9 @@ namespace _3DTools
             double angle = y;
             Quaternion delta = new Quaternion(axis, -angle);
 
-            // Get the current orientantion from the RotateTransform3D
             Quaternion q = new Quaternion(_rotation.Axis, _rotation.Angle);
-
-            // Compose the delta with the previous orientation
-            q *= delta;
-
-            // Write the new orientation back to the Rotation3D
+            q = delta * q;
+            q.Normalize();
             _rotation.Axis = q.Axis;
             _rotation.Angle = q.Angle;
         }

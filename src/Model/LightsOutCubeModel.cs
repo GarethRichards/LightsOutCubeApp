@@ -7,14 +7,14 @@ namespace LightsOutCube
     class LightsOutCubeModel
     {
 //        public long CubeMode;
-        const int bLeft = 0;
-        const int bRight = 2;
-        const int bUp = 1;
-        const int bDown = 3;
+        public const int LEFT = 0;
+        public const int RIGHT = 2;
+        public const int UP = 1;
+        public const int DOWN = 3;
 
-        List<List<int>> Offsets = new List<List<int>>();
-        List<long> aTog1 = new List<long>();
-        List<long> aTog5 = new List<long>();
+        static List<List<int>> Offsets = new List<List<int>>();
+        static List<long> aTog1 = new List<long>();
+        static List<long> aTog5 = new List<long>();
 
         public LightsOutCubeModel()
         {
@@ -75,30 +75,30 @@ namespace LightsOutCube
                 if ((i % 10) != 0)
                 {
                     TogButton(i, i);
-                    TogButton(i, Adjacent(i, bLeft));
-                    TogButton(i, Adjacent(i, bUp));
-                    TogButton(i, Adjacent(i, bDown));
-                    TogButton(i, Adjacent(i, bRight));
+                    TogButton(i, Adjacent(i, LEFT));
+                    TogButton(i, Adjacent(i, UP));
+                    TogButton(i, Adjacent(i, DOWN));
+                    TogButton(i, Adjacent(i, RIGHT));
                 }
             }
         }
 
-        public int Adjacent(int i, int j)
+        public static int Adjacent(int i, int j)
         {
             return (i + Offsets[i % 20][j]) % 60;
         }
 
-        public void Tog1(int index,ref long loc)
+        public static void Tog1(int index,ref long loc)
         {
             loc ^= aTog1[index];
         }
 
-        public void Tog5(int index,ref long loc)
+        public static void Tog5(int index,ref long loc)
         {
             loc ^= aTog5[index];
         }
 
-        public void TogButton(int index, int but)
+        public static void TogButton(int index, int but)
         {
             aTog5[index] |= aTog1[but];
         }

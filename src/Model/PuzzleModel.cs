@@ -52,7 +52,7 @@ namespace LightsOutCube.Model
             for (int i = 0; i < p.ChildNodes.Count; i++)
             {
                 int but = Convert.ToInt32(p.ChildNodes[i].InnerText);
-                model.Tog1(but, ref state);
+                LightsOutCubeModel.Tog1(but, ref state);
             }            // record the initial state for this puzzle so Reset() can restore it
             initialState = state;
         }
@@ -63,7 +63,7 @@ namespace LightsOutCube.Model
         public void Toggle(int buttonIndex)
         {
             oldState = State;
-            model.Tog5(buttonIndex, ref state);
+            LightsOutCubeModel.Tog5(buttonIndex, ref state);
         }
 
         /// <summary>

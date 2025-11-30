@@ -20,10 +20,11 @@
                     </LinearGradientBrush.GradientStops>
                 </LinearGradientBrush>
             </Grid.Background>
+
+            <!-- Viewport3D (unchanged) -->
             <Viewport3D Name="CubeViewport" Focusable="True" IsHitTestVisible="True" ClipToBounds="True" Grid.Column="0" Grid.Row="0">
                 <Viewport3D.Camera>
-                    <PerspectiveCamera x:Name="CubeCamera" Position="0,0,-8" UpDirection="0,1,0" LookDirection="0,0,1" FieldOfView="45" NearPlaneDistance="0.125">
-                    </PerspectiveCamera>
+                    <PerspectiveCamera x:Name="CubeCamera" Position="0,0,-8" UpDirection="0,1,0" LookDirection="0,0,1" FieldOfView="45" NearPlaneDistance="0.125"/>
                 </Viewport3D.Camera>
 
                 <ModelVisual3D x:Name="topModelVisual3D">
@@ -33,10 +34,10 @@
                         </Model3DGroup>
                     </ModelVisual3D.Content>
                 </ModelVisual3D>
+
                 <ModelVisual3D>
                     <ModelVisual3D.Transform>
-                        <Transform3DGroup x:Name="myTransformGroup" >
-                        </Transform3DGroup>
+                        <Transform3DGroup x:Name="myTransformGroup" />
                     </ModelVisual3D.Transform>
 
                     <ModelVisual3D x:Name="mvModel">
@@ -79,56 +80,52 @@
                         </ModelVisual3D.Children>
 
                         <ModelVisual3D.Transform>
-                            <Transform3DGroup >
-                                <ScaleTransform3D ScaleX="{Binding CubeSize}"  ScaleY="{Binding CubeSize}" ScaleZ="{Binding CubeSize}" />
-                            </Transform3DGroup >
+                            <Transform3DGroup>
+                                <ScaleTransform3D ScaleX="{Binding CubeSize}" ScaleY="{Binding CubeSize}" ScaleZ="{Binding CubeSize}" />
+                            </Transform3DGroup>
                         </ModelVisual3D.Transform>
                     </ModelVisual3D>
-
                 </ModelVisual3D>
             </Viewport3D>
-            <!-- Transparent overlay text. Set IsHitTestVisible='False' so mouse events pass to myViewport. -->
-            <TextBlock Name="OverlayText"
-                       Text="Drag to rotate — Left mouse"
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       Foreground="White"
-                       Opacity="0.85"
-                       Margin="12"
-                       HorizontalAlignment="Left"
-                       VerticalAlignment="Top"
-                       Background="Transparent"
-                       IsHitTestVisible="False" />
 
-            <!-- Puzzle combo + Reset overlay: bottom-left, transparent background so scene remains visible.
-                 Keep IsHitTestVisible='True' so user can interact. -->
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Bottom"
-                        Margin="12"
-                        Background="Transparent"
-                        IsHitTestVisible="True">
-                <TextBlock Text="Puzzle:"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Foreground="Gray"
-                           Opacity="0.75"
-                           VerticalAlignment="Center"
-                           Margin="0,0,6,0"
-                           ToolTip="Select puzzle" />
-                <ComboBox x:Name="PuzzleComboOverlay"
-                          ItemsSource="{Binding PuzzleList}"
-                          SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}"
-                          Width="70"
-                          Background="Transparent"
-                          BorderBrush="Transparent"
-                          Foreground="Gray"
-                          Opacity="0.75"
-                          Padding="6"
-                          ToolTip="Select puzzle" />
-                <Button x:Name="ResetButtonOverlay"
-                        Command="{Binding ResetCommand}"
-                        Content="Reset"
+            <!-- Transparent overlay Border used as EventSource for Trackball -->
+            <Border x:Name="EventSourceBorder" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="True" />
+
+            <!-- Simple status panel that uses the ViewModel solution values -->
+            <Border  Visibility="Hidden" Background="#22000000" CornerRadius="4" Padding="8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12" IsHitTestVisible="True">
+                <StackPanel>
+                    <TextBlock Text="Puzzle info" FontWeight="Bold" Foreground="White" Margin="0,0,0,6"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="Solution presses:" Foreground="LightGray" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding SolutionPressCount}" Foreground="White" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="Your presses:" Foreground="LightGray" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PressCount}" Foreground="White" FontWeight="SemiBold" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding SolvedMessage}" Foreground="LightGreen" FontWeight="Bold" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- About button top-right -->
+            <Button x:Name="AboutButton"
+                    Content="About"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Margin="12"
+                    Padding="6,4"
+                    Width="80"
+                    Click="AboutButton_Click"
+                    Opacity="0.85"/>
+
+            <!-- Puzzle combo + Reset overlay: bottom-left -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Background="Transparent" IsHitTestVisible="True">
+                <TextBlock Text="Puzzle:" FontSize="14" FontWeight="SemiBold" Foreground="Gray" Opacity="0.75" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="Select puzzle" />
+                <ComboBox x:Name="PuzzleComboOverlay" ItemsSource="{Binding PuzzleList}" SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}" Width="70" Background="Transparent" BorderBrush="Transparent" Foreground="Gray" Opacity="0.75" Padding="6" ToolTip="Select puzzle" />
+                <Button x:Name="ResetButtonOverlay" Command="{Binding ResetCommand}" Content="Reset" Margin="8,0,0,0" Width="72" Background="Transparent" BorderBrush="White" BorderThickness="1" Foreground="Gray" Opacity="0.75" Padding="6" ToolTip="Reset puzzle" />
+                <Button x:Name="ShowSolutionButton"
+                        Command="{Binding ToggleShowSolutionCommand}"
+                        Content="{Binding ShowSolutionButtonText}"
                         Margin="8,0,0,0"
                         Width="72"
                         Background="Transparent"
@@ -137,24 +134,71 @@
                         Foreground="Gray"
                         Opacity="0.75"
                         Padding="6"
-                        ToolTip="Reset puzzle" />
+                        ToolTip="Show solution" />
             </StackPanel>
 
-            <!-- Solved banner: hidden by default -->
-            <TextBlock x:Name="SolvedBanner"
-                       Text=""
-                       FontSize="28"
-                       FontWeight="Bold"
-                       Foreground="White"
-                       Background="#AA000000"
-                       Padding="12,8"
-                       Visibility="Collapsed"
-                       Opacity="0"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Top"
-                       Margin="0,24,0,0"
-                       IsHitTestVisible="False"/>
-        </Grid>
+            <!-- Solved banner: hidden by default; now a container with two TextBlocks bound to the ViewModel -->
+            <StackPanel x:Name="SolvedBanner"
+                        Visibility="Collapsed"
+                        Opacity="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Margin="0,24,0,0"
+                        IsHitTestVisible="False"
+                        Width="Auto"
+                        Background="#AA000000"
+                        TextOptions.TextFormattingMode="Ideal"
+                        TextOptions.TextRenderingMode="Auto"
+                        >
+                <TextBlock x:Name="SolvedBannerMain"
+                           Text="{Binding SolvedBannerText}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           />
+                <TextBlock x:Name="SolvedBannerAdditional"
+                           Text="{Binding SolvedBannerAdditional}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="LightGreen"
+                           Margin="0,6,0,0"
+                           />
+            </StackPanel>
 
+            <!-- Startup splash screen border: collapsed by default -->
+            <Border x:Name="StartupSplash"
+                    Visibility="Collapsed"
+                    Opacity="0"
+                    CornerRadius="8"
+                    Background="#DD111217"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="18"
+                    IsHitTestVisible="False">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="LightsOutCube"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="A 3D Lights‑Out-Cube emulator"
+                               FontSize="12"
+                               Margin="0,8,0,0"
+                               Foreground="White"
+                               Opacity="0.85"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Original puzzle by Tiger toys"
+                               FontSize="12"
+                               Margin="0,8,0,0"
+                               Foreground="White"
+                               Opacity="0.85"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </DockPanel>
 </Window>

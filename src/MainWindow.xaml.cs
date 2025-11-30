@@ -2,6 +2,7 @@
 using LightsOutCube.Resources;
 using LightsOutCube.ViewModels;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
@@ -9,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 
 namespace LightsOutCube
 {
@@ -39,13 +41,26 @@ namespace LightsOutCube
         // Guard to prevent the solved celebration being started multiple times concurrently
         private bool _celebrationRunning = false;
 
+        // Keep MediaPlayer as a field so it is not garbage-collected while playing
+        private MediaPlayer _startupPlayer;
+
+        // Solution display members
+        private Material _solutionMaterial;
+        private readonly Dictionary<int, DispatcherTimer> _solutionTimers = new Dictionary<int, DispatcherTimer>();
+        private readonly Dictionary<int, Material> _originalMaterials = new Dictionary<int, Material>();
+        private readonly TimeSpan _flashInterval = TimeSpan.FromMilliseconds(300);
+        private const int _flashToggles = 6; // number of material toggles (even -> ends with original)
+
+        // new flag: do not show solution by default
+        private bool _showSolution = false;
+
         public MainWindow()
         {
             InitializeComponent();
             ViewModel = new CubeViewModel();
             DataContext = ViewModel;
 
-            // listen to ViewModel property changes for solved notification
+            // listen to ViewModel property changes for solved notification and puzzle changes
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
             // cleanup on unload to avoid leaks
@@ -75,11 +90,15 @@ namespace LightsOutCube
         }
         public void OnLoaded(Object sender, System.Windows.RoutedEventArgs args)
         {
+            // use the overlay border as the EventSource so mouse moves are detected consistently
             trackball = new Trackball(myTransformGroup);
-            trackball.EventSource = CubeViewport;
+            trackball.EventSource = EventSourceBorder;
 
             _yellowMaterial = new DiffuseMaterial(new SolidColorBrush(Colors.Yellow));
             _defaultMaterial = (Material)System.Windows.Application.Current.Resources["myFunkyMaterial"];
+
+            // solution material (distinct, can tweak color)
+            _solutionMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xFF)));
 
             cubes.Add(myCube, -1);
             // create a couple extra cubes
@@ -135,6 +154,11 @@ namespace LightsOutCube
                 }
             }
             StartUpEffect();
+            PlayStartupSound();
+
+            // show the startup splash overlay
+            ShowStartupSplash();
+
         }
 
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -142,41 +166,112 @@ namespace LightsOutCube
             // guard to avoid multiple celebrations
             if (e.PropertyName == nameof(ViewModel.Solved) && ViewModel.Solved && !_celebrationRunning)
             {
+                // Ensure any solution highlight is hidden when solved (ViewModel will have set ShowSolution=false)
                 Application.Current.Dispatcher.Invoke(() => ShowSolvedEffects());
+            }
+
+            // When a new puzzle is selected, display its solution only if user requested it
+            if (e.PropertyName == nameof(ViewModel.SelectedPuzzle))
+            {
+                if (ViewModel.ShowSolution)
+                {
+                    Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
+                }
+                else
+                {
+                    // always cancel any previous solution display when puzzle changes and user isn't showing solution
+                    CancelSolutionDisplay();
+                }
+            }
+
+            // When the show-solution flag changes in the ViewModel, start/stop the display
+            if (e.PropertyName == nameof(ViewModel.ShowSolution))
+            {
+                try
+                {
+                    if (ViewModel.ShowSolution)
+                    {
+                        Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
+                    }
+                    else
+                    {
+                        CancelSolutionDisplay();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error handling ShowSolution change: {ex}");
+                }
             }
         }
 
-        // unsubscribes to avoid leaks when window closes/unloads
-        private void OnUnloaded(object sender, RoutedEventArgs e)
+        // Button click toggles showing solution
+        private void ShowSolutionButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (ViewModel != null)
-                    ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+                _showSolution = !_showSolution;
 
-                if (ViewModel?.CellsByIndex != null)
+                if (_showSolution)
                 {
-                    foreach (var kvp in ViewModel.CellsByIndex)
-                    {
-                        var index = kvp.Key;
-                        var cell = kvp.Value;
-                        if (_cellHandlers.TryGetValue(index, out var handler))
-                        {
-                            cell.PropertyChanged -= handler;
-                        }
-                    }
-                    _cellHandlers.Clear();
+                    ShowSolutionButton.Content = "Hide Solution";
+                    // display solution for the current puzzle
+                    Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
                 }
+                else
+                {
+                    ShowSolutionButton.Content = "Show Solution";
+                    // hide solution highlights
+                    CancelSolutionDisplay();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ShowSolutionButton_Click error: {ex}");
+            }
+        }
+
+        private void ShowStartupSplash()
+        {
+            try
+            {
+                // enable blocking hit-test while splash is visible
+                StartupSplash.IsHitTestVisible = true;
+                StartupSplash.Visibility = Visibility.Visible;
+                StartupSplash.Opacity = 0;
+
+                var fadeIn = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(300)));
+                var hold = new DoubleAnimation(1, 1, new Duration(TimeSpan.FromMilliseconds(900))) { BeginTime = TimeSpan.FromMilliseconds(300) };
+                var fadeOut = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromMilliseconds(300))) { BeginTime = TimeSpan.FromMilliseconds(1200) };
+
+                var sb = new Storyboard();
+                sb.Children.Add(fadeIn);
+                sb.Children.Add(hold);
+                sb.Children.Add(fadeOut);
+
+                Storyboard.SetTarget(fadeIn, StartupSplash);
+                Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+                Storyboard.SetTarget(hold, StartupSplash);
+                Storyboard.SetTargetProperty(hold, new PropertyPath("Opacity"));
+                Storyboard.SetTarget(fadeOut, StartupSplash);
+                Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+
+                sb.Completed += (s, e) =>
+                {
+                    StartupSplash.Visibility = Visibility.Collapsed;
+                    StartupSplash.IsHitTestVisible = false;
+                };
+
+                sb.Begin();
             }
             catch
             {
-                // best effort cleanup
-            }
-
-            // detach trackball event source so Trackball can unregister events
-            if (trackball != null)
-            {
-                trackball.EventSource = null;
+                try
+                {
+                    StartupSplash.Visibility = Visibility.Collapsed;
+                    StartupSplash.IsHitTestVisible = false;
+                }
+                catch { }
             }
         }
 
@@ -189,7 +284,6 @@ namespace LightsOutCube
             // banner text
             try
             {
-                SolvedBanner.Text = $"Solved Level {ViewModel.SelectedPuzzle}";
                 SolvedBanner.Visibility = Visibility.Visible;
 
                 GradientManager.AnimateBackgroundToRandomGradient(MainGrid, durationMs: 800);
@@ -316,6 +410,50 @@ namespace LightsOutCube
             // removed click-driven puzzle advance — puzzle now advances automatically after the solved celebration
         }
 
+        // Stop flashing for a single solution index and restore the appropriate material.
+        private void StopFlashForModel(int index)
+        {
+            try
+            {
+                if (_solutionTimers.TryGetValue(index, out var timer))
+                {
+                    try { timer.Stop(); } catch { }
+                    _solutionTimers.Remove(index);
+                }
+
+                // Determine final material based on current logical state (on->yellow, off->default)
+                Material final = _defaultMaterial;
+                if (ViewModel?.CellsByIndex != null && ViewModel.CellsByIndex.TryGetValue(index, out var cell))
+                {
+                    final = cell.IsOn ? _yellowMaterial : _defaultMaterial;
+                }
+
+                if (cubesByIndex.TryGetValue(index, out var model3D))
+                {
+                    model3D.Material = final;
+                }
+
+                // remove stored original as we've restored appropriate material
+                if (_originalMaterials.ContainsKey(index))
+                    _originalMaterials.Remove(index);
+            }
+            catch
+            {
+                // best-effort cleanup
+                try
+                {
+                    if (_solutionTimers.TryGetValue(index, out var t2))
+                    {
+                        t2.Stop();
+                        _solutionTimers.Remove(index);
+                    }
+                    if (_originalMaterials.ContainsKey(index))
+                        _originalMaterials.Remove(index);
+                }
+                catch { }
+            }
+        }
+
         public HitTestResultBehavior HTResult(System.Windows.Media.HitTestResult rawresult)
         {
             var rayResult = rawresult as RayHitTestResult;
@@ -341,8 +479,26 @@ namespace LightsOutCube
                     // toggle after animation completes
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        ViewModel.Toggle(iButton);
-                        ViewModel.SetCube();
+                        try
+                        {
+                            ViewModel.Toggle(iButton);
+                            ViewModel.SetCube();
+
+                            // If this button was part of the currently displayed solution, stop its flashing.
+                            // ViewModel.SolutionMask contains the solution mask; stop flashing if bit set.
+                            try
+                            {
+                                if ((ViewModel?.SolutionMask ?? 0L & (1L << iButton)) != 0)
+                                {
+                                    StopFlashForModel(iButton);
+                                }
+                            }
+                            catch { /* ignore */ }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error toggling button {iButton}: {ex}");
+                        }
                     });
                 });
             }
@@ -417,6 +573,215 @@ namespace LightsOutCube
                     Application.Current.Dispatcher);
                 timer.Start();
             }
+        }
+
+        private void PlayStartupSound()
+        {
+            try
+            {
+                // Dispose previous player if any
+                try
+                {
+                    if (_startupPlayer != null)
+                    {
+                        _startupPlayer.Stop();
+                        _startupPlayer.Close();
+                        _startupPlayer = null;
+                    }
+                }
+                catch { }
+
+                // Option A: pack URI for Build Action = Resource
+                var uri = new Uri("pack://application:,,,/Resources/intro.wav", UriKind.Absolute);
+                _startupPlayer = new MediaPlayer();
+                _startupPlayer.Open(uri);
+                _startupPlayer.Volume = 0.75;
+
+                _startupPlayer.MediaOpened += (s, e) => {
+                    try { _startupPlayer.Play(); } catch { }
+                };
+                _startupPlayer.MediaEnded += (s, e) => {
+                    try { _startupPlayer.Close(); } catch { }
+                    _startupPlayer = null;
+                };
+                _startupPlayer.MediaFailed += (s, e) => {
+                    //Debug.WriteLine($"Startup sound failed: {e.ErrorException?.Message}");
+                    try { _startupPlayer.Close(); } catch { }
+                    _startupPlayer = null;
+                };
+            }
+            catch (Exception ex)
+            {
+                //Debug.WriteLine($"PlayStartupSound exception: {ex.Message}");
+            }
+        }
+
+        // Add this method inside the MainWindow class (near other event handlers)
+        private void AboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var about = new AboutWindow { Owner = this };
+                about.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Showing About failed: {ex}");
+            }
+        }
+
+        // -------------------- Solution display logic --------------------
+
+        // Build a long-state mask from ViewModel.CellsByIndex (1L << index)
+        private long BuildCurrentMaskFromViewModel()
+        {
+            long mask = 0L;
+            if (ViewModel?.CellsByIndex == null) return mask;
+
+            foreach (var kvp in ViewModel.CellsByIndex)
+            {
+                int idx = kvp.Key;
+                var cell = kvp.Value;
+                if (cell.IsOn)
+                    mask |= (1L << idx);
+            }
+            return mask;
+        }
+
+        // Public entry - called when a new puzzle is set
+        private void DisplaySolutionForCurrentPuzzle()
+        {
+            try
+            {
+                // cancel previous display first
+                CancelSolutionDisplay();
+
+                // prepare solver
+                var solver = new LightsOutCube.Model.LightsOutCubeSolver();
+
+                // set current state
+                var currentMask = BuildCurrentMaskFromViewModel();
+                solver.SetCurrent(currentMask);
+
+                // If your solver requires masks (bot/mid/top) they must be initialized here.
+                // The converted solver has setters SetBotMasks/SetMidMasks/SetTopMasks which you can call
+                // if you have those masks available from LightsOutCubeModel. If not needed, skip.
+
+                var found = solver.Solve();
+                if (!found)
+                    return;
+
+                var solMask = solver.Solution;
+                // For each cell that should be pressed, start a flash timer
+                foreach (var kvp in cubesByIndex)
+                {
+                    int index = kvp.Key;
+                    var model3D = kvp.Value;
+                    if ((solMask & (1L << index)) != 0)
+                    {
+                        // remember original material
+                        if (!_originalMaterials.ContainsKey(index))
+                            _originalMaterials[index] = model3D.Material;
+
+                        StartFlashForModel(index, model3D);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //Debug.WriteLine($"DisplaySolutionForCurrentPuzzle error: {ex}");
+            }
+        }
+
+        private void StartFlashForModel(int index, GeometryModel3D model3D)
+        {
+            if (model3D == null) return;
+
+            // Ensure existing timer for this index is stopped
+            if (_solutionTimers.TryGetValue(index, out var existing))
+            {
+                try { existing.Stop(); } catch { }
+                _solutionTimers.Remove(index);
+            }
+
+            // Remember original material
+            if (!_originalMaterials.ContainsKey(index))
+                _originalMaterials[index] = model3D.Material;
+
+            bool lit = true;
+            // Start with solution material visible immediately
+            model3D.Material = _solutionMaterial;
+
+            var timer = new DispatcherTimer(_flashInterval, DispatcherPriority.Normal, (s, e) =>
+            {
+                try
+                {
+                    // toggle material each tick
+                    model3D.Material = lit ? _originalMaterials[index] : _solutionMaterial;
+                    lit = !lit;
+                }
+                catch
+                {
+                    try { ((DispatcherTimer)s).Stop(); } catch { }
+                    // restore safe fallback
+                    model3D.Material = _originalMaterials.ContainsKey(index) ? _originalMaterials[index] : _defaultMaterial;
+                    _solutionTimers.Remove(index);
+                }
+            }, Application.Current.Dispatcher);
+
+            // Keep reference so it can be stopped later; timer runs indefinitely until CancelSolutionDisplay is called
+            _solutionTimers[index] = timer;
+            timer.Start();
+        }
+
+        private void CancelSolutionDisplay()
+        {
+            foreach (var kvp in _solutionTimers)
+            {
+                try { kvp.Value.Stop(); } catch { }
+            }
+            _solutionTimers.Clear();
+
+            // restore materials
+            foreach (var kvp in _originalMaterials)
+            {
+                try
+                {
+                    if (cubesByIndex.TryGetValue(kvp.Key, out var model3D))
+                        model3D.Material = kvp.Value;
+                }
+                catch { }
+            }
+            _originalMaterials.Clear();
+        }
+
+        // Add this method inside the MainWindow class
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            // Unsubscribe all cell property changed handlers to avoid memory leaks
+            foreach (var kvp in _cellHandlers)
+            {
+                if (ViewModel?.CellsByIndex != null && ViewModel.CellsByIndex.TryGetValue(kvp.Key, out var cell))
+                {
+                    cell.PropertyChanged -= kvp.Value;
+                }
+            }
+            _cellHandlers.Clear();
+
+            // Cancel any solution display timers
+            CancelSolutionDisplay();
+
+            // Optionally, stop any media playback
+            try
+            {
+                if (_startupPlayer != null)
+                {
+                    _startupPlayer.Stop();
+                    _startupPlayer.Close();
+                    _startupPlayer = null;
+                }
+            }
+            catch { }
         }
     }
 }

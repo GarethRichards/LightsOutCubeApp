@@ -19,7 +19,8 @@ namespace LightsOutCube.Resources
             "Gradient_DeepOcean",
             "Gradient_PurpleCosmos",
             "Gradient_EmeraldTeal",
-            "Gradient_WarmSunrise"
+            "Gradient_WarmSunrise",
+            "Gradient_AnimatedSky"
         };
 
         // Pick a random gradient from application resources (or optionally a provided ResourceDictionary)

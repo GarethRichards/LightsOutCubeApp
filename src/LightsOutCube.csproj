@@ -60,5 +60,11 @@
     <Resource Include="Resources\side5.gif" />
     <Resource Include="Resources\side6.gif" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Resources\Intro.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

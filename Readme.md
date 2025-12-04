@@ -4,7 +4,7 @@ This repository contains the source for the Lights Out Cube App — a 3D emulator 
 physical Lights Out Cube toy (Tiger, late 1990s). The objective is to press the cube's buttons to 
 turn all lights off.
 
-![Application window](doc/App screen shot.png)
+![Application window](doc/App%20screen%20shot.png)
 
 ## History
 This code was started in 2005, thought lost on an old PC, but recently November 2025 found on a backup of the old PC.

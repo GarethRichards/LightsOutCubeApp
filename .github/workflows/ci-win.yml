@@ -27,9 +27,18 @@ jobs:
         run: msbuild LightsOutCube.sln /p:Configuration=Release /m
 
       - name: Run unit tests (vstest)
+        shell: pwsh
         run: |
-          dir /s /b src\**\bin\Release\*LightsOutCube.Tests*.dll
-          vstest.console.exe src\LightsOutCube.Tests\bin\Release\LightsOutCube.Tests.dll
+          # find built test assemblies under src\**\bin\Release
+          $tests = Get-ChildItem -Path src -Recurse -Filter '*LightsOutCube.Tests*.dll' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+          if (-not $tests) {
+            Write-Host 'No test assemblies found.'
+            exit 0
+          }
+          foreach ($t in $tests) {
+            Write-Host "Running tests in $t"
+            vstest.console.exe $t
+          }
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

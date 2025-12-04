@@ -17,6 +17,9 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
 
+      - name: Setup MSBuild (Visual Studio)
+        uses: microsoft/setup-msbuild@v1
+
       - name: Restore NuGet packages
         run: nuget restore LightsOutCube.sln
 
@@ -25,9 +28,7 @@ jobs:
 
       - name: Run unit tests (vstest)
         run: |
-          # find built test DLL(s)
           dir /s /b src\**\bin\Release\*LightsOutCube.Tests*.dll
-          # run VSTest (vstest.console.exe is available on the runner)
           vstest.console.exe src\LightsOutCube.Tests\bin\Release\LightsOutCube.Tests.dll
 
       - name: Upload build artifacts

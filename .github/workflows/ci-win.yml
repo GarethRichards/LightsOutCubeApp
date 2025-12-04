@@ -29,8 +29,8 @@ jobs:
       - name: Run unit tests (vstest)
         shell: pwsh
         run: |
-          # find built test assemblies under src\**\bin\Release
-          $tests = Get-ChildItem -Path src -Recurse -Filter '*LightsOutCube.Tests*.dll' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+          # find built test assemblies under LightsOutCube.Tests\
+          $tests = Get-ChildItem -Path LightsOutCube.Tests -Recurse -Filter '*LightsOutCube.Tests*.dll' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
           if (-not $tests) {
             Write-Host 'No test assemblies found.'
             exit 0

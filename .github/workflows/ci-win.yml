@@ -1,0 +1,38 @@
+name: CI (Windows .NET Framework)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+
+      - name: Restore NuGet packages
+        run: nuget restore LightsOutCube.sln
+
+      - name: Build solution (Release)
+        run: msbuild LightsOutCube.sln /p:Configuration=Release /m
+
+      - name: Run unit tests (vstest)
+        run: |
+          # find built test DLL(s)
+          dir /s /b src\**\bin\Release\*LightsOutCube.Tests*.dll
+          # run VSTest (vstest.console.exe is available on the runner)
+          vstest.console.exe src\LightsOutCube.Tests\bin\Release\LightsOutCube.Tests.dll
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            src\**\bin\Release\**

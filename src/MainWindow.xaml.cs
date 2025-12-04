@@ -2,7 +2,6 @@
 using LightsOutCube.Resources;
 using LightsOutCube.ViewModels;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
@@ -16,16 +15,16 @@ namespace LightsOutCube
 {
     public partial class MainWindow : Window
     {
-        double CubeScale = 0.14;
-        CubeViewModel ViewModel = new CubeViewModel();
-        Dictionary<GeometryModel3D, int> cubes = new Dictionary<GeometryModel3D, int>();
-        Dictionary<int, GeometryModel3D> cubesByIndex = new Dictionary<int, GeometryModel3D>();
+        private double _cubeScale = 0.14;
+        private CubeViewModel _viewModel;
+        private Dictionary<GeometryModel3D, int> _cubes = new Dictionary<GeometryModel3D, int>();
+        private Dictionary<int, GeometryModel3D> _cubesByIndex = new Dictionary<int, GeometryModel3D>();
         // map index -> translate transform for animation
         private readonly Dictionary<int, TranslateTransform3D> cubeTranslateByIndex = new Dictionary<int, TranslateTransform3D>();
 
-        int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+        private int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
 
-        Trackball trackball;
+        private Trackball _trackball;
 
         private Material _yellowMaterial;
         private Material _defaultMaterial;
@@ -34,7 +33,7 @@ namespace LightsOutCube
         private readonly Dictionary<int, PropertyChangedEventHandler> _cellHandlers = new Dictionary<int, PropertyChangedEventHandler>();
 
         // how far a button moves toward the center when pressed (tweak as needed)
-        private const double PressInset = 0.12;
+        private const double _pressInset = 0.12;
 
         private readonly Random _rand = new Random();
 
@@ -49,7 +48,6 @@ namespace LightsOutCube
         private readonly Dictionary<int, DispatcherTimer> _solutionTimers = new Dictionary<int, DispatcherTimer>();
         private readonly Dictionary<int, Material> _originalMaterials = new Dictionary<int, Material>();
         private readonly TimeSpan _flashInterval = TimeSpan.FromMilliseconds(300);
-        private const int _flashToggles = 6; // number of material toggles (even -> ends with original)
 
         // new flag: do not show solution by default
         private bool _showSolution = false;
@@ -57,16 +55,15 @@ namespace LightsOutCube
         public MainWindow()
         {
             InitializeComponent();
-            ViewModel = new CubeViewModel();
-            DataContext = ViewModel;
+            _viewModel = new CubeViewModel();
+            DataContext = _viewModel;
 
             // listen to ViewModel property changes for solved notification and puzzle changes
-            ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
 
             // cleanup on unload to avoid leaks
             this.Unloaded += OnUnloaded;
         }
-
         private void StartUpEffect()
         {
             try
@@ -91,8 +88,10 @@ namespace LightsOutCube
         public void OnLoaded(Object sender, System.Windows.RoutedEventArgs args)
         {
             // use the overlay border as the EventSource so mouse moves are detected consistently
-            trackball = new Trackball(myTransformGroup);
-            trackball.EventSource = EventSourceBorder;
+            _trackball = new Trackball(myTransformGroup)
+            {
+                EventSource = EventSourceBorder
+            };
 
             _yellowMaterial = new DiffuseMaterial(new SolidColorBrush(Colors.Yellow));
             _defaultMaterial = (Material)System.Windows.Application.Current.Resources["myFunkyMaterial"];
@@ -100,7 +99,7 @@ namespace LightsOutCube
             // solution material (distinct, can tweak color)
             _solutionMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xFF)));
 
-            cubes.Add(myCube, -1);
+            _cubes.Add(myCube, -1);
             // create a couple extra cubes
             double ti, tj;
             double cs = 0.47;
@@ -122,16 +121,26 @@ namespace LightsOutCube
                 }
             }
             myCube.Transform = new ScaleTransform3D(0.1, 0.1, 0.1);
-            ViewModel.InitializeCells(cubesByIndex.Keys);
+            _viewModel.InitializeCells(_cubesByIndex.Keys);
+            InitializeCellVisuals();
+            StartUpEffect();
+            PlayStartupSound();
+
+            // show the startup splash overlay
+            ShowStartupSplash();
+        }
+        void InitializeCellVisuals()
+        {
+
             // Map VM cells to visuals: subscribe to property changes and set materials in the View (UI)
-            if (ViewModel.CellsByIndex != null)
+            if (_viewModel.CellsByIndex != null)
             {
-                foreach (var kvp in cubesByIndex)
+                foreach (var kvp in _cubesByIndex)
                 {
                     int index = kvp.Key;
                     var model3D = kvp.Value;
 
-                    if (!ViewModel.CellsByIndex.TryGetValue(index, out var cell))
+                    if (!_viewModel.CellsByIndex.TryGetValue(index, out var cell))
                         continue;
 
                     // apply initial state
@@ -153,27 +162,22 @@ namespace LightsOutCube
                     _cellHandlers[index] = handler;
                 }
             }
-            StartUpEffect();
-            PlayStartupSound();
-
-            // show the startup splash overlay
-            ShowStartupSplash();
-
         }
+        
 
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // guard to avoid multiple celebrations
-            if (e.PropertyName == nameof(ViewModel.Solved) && ViewModel.Solved && !_celebrationRunning)
+            if (e.PropertyName == nameof(_viewModel.Solved) && _viewModel.Solved && !_celebrationRunning)
             {
                 // Ensure any solution highlight is hidden when solved (ViewModel will have set ShowSolution=false)
                 Application.Current.Dispatcher.Invoke(() => ShowSolvedEffects());
             }
 
             // When a new puzzle is selected, display its solution only if user requested it
-            if (e.PropertyName == nameof(ViewModel.SelectedPuzzle))
+            if (e.PropertyName == nameof(_viewModel.SelectedPuzzle))
             {
-                if (ViewModel.ShowSolution)
+                if (_viewModel.ShowSolution)
                 {
                     Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
                 }
@@ -185,11 +189,11 @@ namespace LightsOutCube
             }
 
             // When the show-solution flag changes in the ViewModel, start/stop the display
-            if (e.PropertyName == nameof(ViewModel.ShowSolution))
+            if (e.PropertyName == nameof(_viewModel.ShowSolution))
             {
                 try
                 {
-                    if (ViewModel.ShowSolution)
+                    if (_viewModel.ShowSolution)
                     {
                         Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
                     }
@@ -309,7 +313,7 @@ namespace LightsOutCube
                     {
                         SolvedBanner.Visibility = Visibility.Collapsed;
                         // advance to next puzzle after the celebration animation (only once)
-                        ViewModel.PuzzleSolved();
+                        _viewModel.PuzzleSolved();
                     }
                     finally
                     {
@@ -368,17 +372,14 @@ namespace LightsOutCube
         {
             ModelVisual3D extraCube = new ModelVisual3D();
             Model3DGroup modelGroup = new Model3DGroup();
-            GeometryModel3D model3d = new GeometryModel3D();
-            model3d = myCube.Clone();
-
-            MaterialGroup m = (MaterialGroup)System.Windows.Application.Current.Resources["myFunkyMaterial"];
+            var model3d = myCube.Clone();
 
             modelGroup.Children.Add(model3d);
             extraCube.Content = modelGroup;
             Transform3DGroup tg = new Transform3DGroup();
             extraCube.Transform = tg;
 
-            tg.Children.Add(new ScaleTransform3D(CubeScale, CubeScale, CubeScale));
+            tg.Children.Add(new ScaleTransform3D(_cubeScale, _cubeScale, _cubeScale));
 
             // use the provided TranslateTransform3D instance and keep a reference for animations
             tg.Children.Add(TT);
@@ -390,8 +391,8 @@ namespace LightsOutCube
         private void AddCube(GeometryModel3D Model3D, int i, TranslateTransform3D tt)
         {
             int key = model[i];
-            cubes.Add(Model3D, key);
-            cubesByIndex.Add(key, Model3D);
+            _cubes.Add(Model3D, key);
+            _cubesByIndex.Add(key, Model3D);
 
             // store transform for later animation
             cubeTranslateByIndex[key] = tt;
@@ -400,10 +401,7 @@ namespace LightsOutCube
         void OnClick(Object sender, MouseButtonEventArgs args)
         {
             System.Windows.Point mouseposition = args.GetPosition(CubeViewport);
-            Point3D testpoint3D = new Point3D(mouseposition.X, mouseposition.Y, 0);
-            Vector3D testdirection = new Vector3D(mouseposition.X, mouseposition.Y, 10);
             PointHitTestParameters pointparams = new PointHitTestParameters(mouseposition);
-            RayHitTestParameters rayparams = new RayHitTestParameters(testpoint3D, testdirection);
 
             VisualTreeHelper.HitTest(CubeViewport, null, HTResult, pointparams);
 
@@ -423,12 +421,12 @@ namespace LightsOutCube
 
                 // Determine final material based on current logical state (on->yellow, off->default)
                 Material final = _defaultMaterial;
-                if (ViewModel?.CellsByIndex != null && ViewModel.CellsByIndex.TryGetValue(index, out var cell))
+                if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
                 {
                     final = cell.IsOn ? _yellowMaterial : _defaultMaterial;
                 }
 
-                if (cubesByIndex.TryGetValue(index, out var model3D))
+                if (_cubesByIndex.TryGetValue(index, out var model3D))
                 {
                     model3D.Material = final;
                 }
@@ -456,19 +454,16 @@ namespace LightsOutCube
 
         public HitTestResultBehavior HTResult(System.Windows.Media.HitTestResult rawresult)
         {
-            var rayResult = rawresult as RayHitTestResult;
-            if (rayResult == null)
+            if (!(rawresult is RayHitTestResult rayResult))
                 return HitTestResultBehavior.Stop;
 
-            var meshResult = rayResult as RayMeshGeometry3DHitTestResult;
-            if (meshResult == null)
+            if (!(rayResult is RayMeshGeometry3DHitTestResult meshResult))
                 return HitTestResultBehavior.Stop;
 
-            var hitgeo = meshResult.ModelHit as GeometryModel3D;
-            if (hitgeo == null)
+            if (!(meshResult.ModelHit is GeometryModel3D hitgeo))
                 return HitTestResultBehavior.Stop;
 
-            if (!cubes.TryGetValue(hitgeo, out int iButton))
+            if (!_cubes.TryGetValue(hitgeo, out int iButton))
                 return HitTestResultBehavior.Stop;
 
             try
@@ -481,14 +476,14 @@ namespace LightsOutCube
                     {
                         try
                         {
-                            ViewModel.Toggle(iButton);
-                            ViewModel.SetCube();
+                            _viewModel.Toggle(iButton);
+                            _viewModel.SetCube();
 
                             // If this button was part of the currently displayed solution, stop its flashing.
                             // ViewModel.SolutionMask contains the solution mask; stop flashing if bit set.
                             try
                             {
-                                if ((ViewModel?.SolutionMask ?? 0L & (1L << iButton)) != 0)
+                                if ((_viewModel?.SolutionMask ?? 0L & (1L << iButton)) != 0)
                                 {
                                     StopFlashForModel(iButton);
                                 }
@@ -543,9 +538,9 @@ namespace LightsOutCube
             double ny = dy / len;
             double nz = dz / len;
 
-            double tx = ox + nx * PressInset;
-            double ty = oy + ny * PressInset;
-            double tz = oz + nz * PressInset;
+            double tx = ox + nx * _pressInset;
+            double ty = oy + ny * _pressInset;
+            double tz = oz + nz * _pressInset;
 
             var durMs = 150; // single direction duration (tweak)
             var dur = new Duration(TimeSpan.FromMilliseconds(durMs));
@@ -579,43 +574,74 @@ namespace LightsOutCube
         {
             try
             {
-                // Dispose previous player if any
-                try
+                CleanupStartupPlayer();
+
+                // Extract to temp file first (for embedded Resource)
+                var resourceStream = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/Intro.wav", UriKind.Absolute));
+                if (resourceStream == null)
                 {
-                    if (_startupPlayer != null)
-                    {
-                        _startupPlayer.Stop();
-                        _startupPlayer.Close();
-                        _startupPlayer = null;
-                    }
+                    System.Diagnostics.Debug.WriteLine("Intro.wav resource not found");
+                    return;
                 }
-                catch { }
 
-                // Option A: pack URI for Build Action = Resource
-                var uri = new Uri("pack://application:,,,/Resources/intro.wav", UriKind.Absolute);
+                var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "LightsOutCube_Intro.wav");
+                using (var fileStream = System.IO.File.Create(tempPath))
+                {
+                    resourceStream.Stream.CopyTo(fileStream);
+                }
+
                 _startupPlayer = new MediaPlayer();
-                _startupPlayer.Open(uri);
+                _startupPlayer.MediaOpened += StartupPlayer_MediaOpened;
+                _startupPlayer.MediaEnded += StartupPlayer_MediaEnded;
+                _startupPlayer.MediaFailed += StartupPlayer_MediaFailed;
+                
+                _startupPlayer.Open(new Uri(tempPath, UriKind.Absolute));
                 _startupPlayer.Volume = 0.75;
-
-                _startupPlayer.MediaOpened += (s, e) => {
-                    try { _startupPlayer.Play(); } catch { }
-                };
-                _startupPlayer.MediaEnded += (s, e) => {
-                    try { _startupPlayer.Close(); } catch { }
-                    _startupPlayer = null;
-                };
-                _startupPlayer.MediaFailed += (s, e) => {
-                    //Debug.WriteLine($"Startup sound failed: {e.ErrorException?.Message}");
-                    try { _startupPlayer.Close(); } catch { }
-                    _startupPlayer = null;
-                };
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"PlayStartupSound exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"PlayStartupSound exception: {ex.Message}");
+                CleanupStartupPlayer();
             }
         }
 
+        private void StartupPlayer_MediaOpened(object sender, EventArgs e)
+        {
+            try { _startupPlayer?.Play(); } catch { }
+        }
+
+        private void StartupPlayer_MediaEnded(object sender, EventArgs e)
+        {
+            CleanupStartupPlayer();
+        }
+
+        private void StartupPlayer_MediaFailed(object sender, ExceptionEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"Startup sound failed: {e.ErrorException?.Message}");
+            CleanupStartupPlayer();
+        }
+
+        private void CleanupStartupPlayer()
+        {
+            if (_startupPlayer != null)
+            {
+                try
+                {
+                    // Unsubscribe event handlers
+                    _startupPlayer.MediaOpened -= StartupPlayer_MediaOpened;
+                    _startupPlayer.MediaEnded -= StartupPlayer_MediaEnded;
+                    _startupPlayer.MediaFailed -= StartupPlayer_MediaFailed;
+                    
+                    _startupPlayer.Stop();
+                    _startupPlayer.Close();
+                }
+                catch { }
+                finally
+                {
+                    _startupPlayer = null;
+                }
+            }
+        }
         // Add this method inside the MainWindow class (near other event handlers)
         private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
@@ -636,9 +662,9 @@ namespace LightsOutCube
         private long BuildCurrentMaskFromViewModel()
         {
             long mask = 0L;
-            if (ViewModel?.CellsByIndex == null) return mask;
+            if (_viewModel?.CellsByIndex == null) return mask;
 
-            foreach (var kvp in ViewModel.CellsByIndex)
+            foreach (var kvp in _viewModel.CellsByIndex)
             {
                 int idx = kvp.Key;
                 var cell = kvp.Value;
@@ -673,7 +699,7 @@ namespace LightsOutCube
 
                 var solMask = solver.Solution;
                 // For each cell that should be pressed, start a flash timer
-                foreach (var kvp in cubesByIndex)
+                foreach (var kvp in _cubesByIndex)
                 {
                     int index = kvp.Key;
                     var model3D = kvp.Value;
@@ -747,7 +773,7 @@ namespace LightsOutCube
             {
                 try
                 {
-                    if (cubesByIndex.TryGetValue(kvp.Key, out var model3D))
+                    if (_cubesByIndex.TryGetValue(kvp.Key, out var model3D))
                         model3D.Material = kvp.Value;
                 }
                 catch { }
@@ -761,7 +787,7 @@ namespace LightsOutCube
             // Unsubscribe all cell property changed handlers to avoid memory leaks
             foreach (var kvp in _cellHandlers)
             {
-                if (ViewModel?.CellsByIndex != null && ViewModel.CellsByIndex.TryGetValue(kvp.Key, out var cell))
+                if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(kvp.Key, out var cell))
                 {
                     cell.PropertyChanged -= kvp.Value;
                 }

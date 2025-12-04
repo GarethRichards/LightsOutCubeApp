@@ -97,7 +97,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side1Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side1.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side1.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>
@@ -105,7 +105,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side2Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side3.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side3.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>
@@ -113,7 +113,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side3Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side5.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side5.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>
@@ -121,7 +121,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side4Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side4.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side4.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>
@@ -129,7 +129,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side5Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side6.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side6.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>
@@ -137,7 +137,7 @@ Positions="-0.5,-0.5,-0.5
         <MaterialGroup x:Key="Side6Material">
             <DiffuseMaterial>
                 <DiffuseMaterial.Brush>
-                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side2.gif" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
+                    <ImageBrush Stretch="UniformToFill" ImageSource="Resources\Side2.png" TileMode="None" ViewportUnits="Absolute" Viewport="0 0 1 1" AlignmentX="Left" AlignmentY="Top" Opacity="1" />
                 </DiffuseMaterial.Brush>
             </DiffuseMaterial>
         </MaterialGroup>

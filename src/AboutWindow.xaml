@@ -11,9 +11,9 @@
         >
     <Border Padding="18" CornerRadius="6" Background="#DD111217">
         <StackPanel Width="380">
-            <TextBlock Text="LightsOutCube" FontSize="22" FontWeight="Bold" Margin="0,0,0,6"/>
+            <TextBlock Text="LightsOut Cube" FontSize="22" FontWeight="Bold" Margin="0,0,0,6"/>
             <TextBlock x:Name="VersionText" FontSize="12" Opacity="0.9" Margin="0,0,0,12"/>
-            <TextBlock Text="A small WPF 3D Lights‑Out puzzle demo." TextWrapping="Wrap" Margin="0,0,0,12"/>
+            <TextBlock Text="A small WPF 3D Lights‑Out puzzle demo. Written by Gareth Richards." TextWrapping="Wrap" Margin="0,0,0,12"/>
             <TextBlock Text="Credits" FontWeight="SemiBold" Margin="0,8,0,4"/>
             <TextBlock Text="• Trackball code adapted from 3DTools sample" TextWrapping="Wrap" Margin="0,0,0,2"/>
             <TextBlock Text="• Gradient themes and animations by project" TextWrapping="Wrap" Margin="0,0,0,8"/>

@@ -33,23 +33,38 @@ namespace LightsOutCube.Tests
             Assert.IsTrue(vm.Solved, "Puzzle was not solved after applying solver presses.");
         }
         [TestMethod]
-        public void Solver_ComputesSolution_And_ApplyingIt_SolvesPuzzle()
+        public void Solve_EveryPuzzle()
         {
-            for (int i = 1; i < 29; i++)
+            for (int i = 1; i < 54; i++)
             {
                 Solve_puzzle_and_verify_solution(i);
             }
-            for (int i = 30; i < 46; i++)
-            {
-                Solve_puzzle_and_verify_solution(i);
-            }
-            for (int i = 47; i <= 54; i++)
-            {
-                Solve_puzzle_and_verify_solution(i);
-            }
-            // Puzzles 29 and 46 maybe transcribed incorrectly or the solver has issues with them.
+        }
+        [TestMethod]
+        public void Toggle_IncrementsPressCount()
+        {
+            var vm = new CubeViewModel();
+            vm.InitializeCells(Enumerable.Range(1, 59));
+            vm.SetPuzzle(1);
+
+            int initialCount = vm.PressCount;
+            vm.Toggle(5);
+
+            Assert.AreEqual(initialCount + 1, vm.PressCount);
         }
 
+        [TestMethod]
+        public void Reset_ClearsPressCount()
+        {
+            var vm = new CubeViewModel();
+            vm.InitializeCells(Enumerable.Range(1, 59));
+            vm.SetPuzzle(1);
+            vm.Toggle(1);
+
+            vm.ResetCommand.Execute(null);
+
+            Assert.AreEqual(0, vm.PressCount);
+        }
 
     }
 }

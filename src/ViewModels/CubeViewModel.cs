@@ -227,7 +227,7 @@ namespace LightsOutCube.ViewModels
             }
         }
 
-        int _selectedPuzzle;
+        private int _selectedPuzzle;
         public int SelectedPuzzle
         {
             get => _selectedPuzzle;
@@ -247,26 +247,29 @@ namespace LightsOutCube.ViewModels
         // Observable puzzle list for binding
         public void PuzzleSolved()
         {
-            SelectedPuzzle++;
+            if (SelectedPuzzle < 54)
+                SelectedPuzzle++;
+            else
+                SelectedPuzzle = 1;
         }
         public ObservableCollection<int> PuzzleList { get; }
 
-        Color _gradientStart = Colors.DarkBlue;
+        private Color _gradientStart = Colors.DarkBlue;
         public Color GradientStart
         {
             get => _gradientStart;
             set => SetProperty(ref _gradientStart, value);
         }
-        Color _gradientEnd = Colors.Black;
+        private Color _gradientEnd = Colors.Black;
         public Color GradientEnd
         {
             get => _gradientEnd;
             set => SetProperty(ref _gradientEnd, value);
         }
-        double _CubeSize = 3.04;
+        private readonly double _cubeSize = 3.04;
         public double CubeSize
         {
-            get => _CubeSize;
+            get => _cubeSize;
         }
 
         // --- Solver integration ---

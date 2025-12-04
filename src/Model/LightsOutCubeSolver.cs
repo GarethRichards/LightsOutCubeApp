@@ -2,9 +2,7 @@
 
 namespace LightsOutCube.Model
 {
-    /// <summary>
-    /// Solves the Lights out Cube puzzle.
-    /// </summary>
+
     internal class LightsOutCubeSolver
     {
         private long _solution;    // buttons that need to be pressed.
@@ -178,10 +176,6 @@ namespace LightsOutCube.Model
                                 }
                             }
                         }
-
-                        long oldC2 = c;
-                        long oldSol2 = sol;
-                        int oldNbuts2 = nbuts;
 
                         // Now try to turn the top lights off — there are 8 top positions
                         for (int i3 = 0; i3 < 8; i3++)

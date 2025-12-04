@@ -9,7 +9,7 @@
     <!-- metadata -->
     <AssemblyName>LightsOutCube</AssemblyName>
     <RootNamespace>LightsOutCube</RootNamespace>
-    <AssemblyTitle>LightsOutCube2</AssemblyTitle>
+    <AssemblyTitle>LightsOutCube</AssemblyTitle>
 
     <!-- build settings -->
     <Deterministic>true</Deterministic>
@@ -50,21 +50,30 @@
   </ItemGroup>
   
   <ItemGroup>
+    <None Remove="Resources\Intro.wav" />
+    <None Remove="Resources\MainIcon.ico" />
+    <None Remove="Resources\Side1.png" />
+    <None Remove="Resources\Side2.png" />
+    <None Remove="Resources\Side3.png" />
+    <None Remove="Resources\Side4.png" />
+    <None Remove="Resources\Side5.png" />
+    <None Remove="Resources\Side6.png" />
   </ItemGroup>
   
   <ItemGroup>
-    <Resource Include="Resources\side1.gif" />
-    <Resource Include="Resources\side2.gif" />
-    <Resource Include="Resources\side3.gif" />
-    <Resource Include="Resources\side4.gif" />
-    <Resource Include="Resources\side5.gif" />
-    <Resource Include="Resources\side6.gif" />
+    <Resource Include="Resources\MainIcon.ico" />
   </ItemGroup>
   
   <ItemGroup>
-    <None Update="Resources\Intro.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Resource Include="Resources\Intro.wav">
+      <CopyToOutputDirectory></CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Side1.png" />
+    <Resource Include="Resources\Side2.png" />
+    <Resource Include="Resources\Side3.png" />
+    <Resource Include="Resources\Side4.png" />
+    <Resource Include="Resources\Side5.png" />
+    <Resource Include="Resources\Side6.png" />
   </ItemGroup>
 
 </Project>

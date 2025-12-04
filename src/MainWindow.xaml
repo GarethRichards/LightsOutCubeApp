@@ -10,6 +10,10 @@
         MouseLeftButtonDown="OnClick"
         Title="Lights Out Cube"
         Height="500" Width="500">
+    <Window.InputBindings>
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding ResetCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding ToggleShowSolutionCommand}"/>
+    </Window.InputBindings>
     <DockPanel>
         <Grid Name="MainGrid">
             <Grid.Background>
@@ -116,7 +120,7 @@
                     Padding="6,4"
                     Width="80"
                     Click="AboutButton_Click"
-                    Opacity="0.85"/>
+                    Opacity="0.35"/>
 
             <!-- Puzzle combo + Reset overlay: bottom-left -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Background="Transparent" IsHitTestVisible="True">
@@ -126,13 +130,15 @@
                 <Button x:Name="ShowSolutionButton"
                         Command="{Binding ToggleShowSolutionCommand}"
                         Content="{Binding ShowSolutionButtonText}"
+                        AutomationProperties.Name="Show or hide solution"
+                        AutomationProperties.HelpText="Press to toggle solution display"
                         Margin="8,0,0,0"
-                        Width="72"
+                        Width="120"
                         Background="Transparent"
                         BorderBrush="White"
                         BorderThickness="1"
                         Foreground="Gray"
-                        Opacity="0.75"
+                        Opacity="0.35"
                         Padding="6"
                         ToolTip="Show solution" />
             </StackPanel>
@@ -180,12 +186,18 @@
                     Padding="18"
                     IsHitTestVisible="False">
                 <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="LightsOutCube"
+                    <TextBlock Text="LightsOut Cube"
                                FontSize="28"
                                FontWeight="Bold"
                                Foreground="White"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="A 3D Lights‑Out-Cube emulator"
+                               FontSize="12"
+                               Margin="0,8,0,0"
+                               Foreground="White"
+                               Opacity="0.85"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="By Gareth Richards"
                                FontSize="12"
                                Margin="0,8,0,0"
                                Foreground="White"

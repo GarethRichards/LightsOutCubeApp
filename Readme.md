@@ -4,6 +4,8 @@ This repository contains the source for the Lights Out Cube App — a 3D emulator 
 physical Lights Out Cube toy (Tiger, late 1990s). The objective is to press the cube's buttons to 
 turn all lights off.
 
+![Application window](docs/App screen shot.png)
+
 ## History
 This code was started in 2005, thought lost on an old PC, but recently November 2025 found on a backup of the old PC.
 
@@ -43,8 +45,7 @@ Build and run
 - Run tests locally before submitting a PR.
 
 ## Troubleshooting / Known issues
-- Some puzzle entries (e.g. puzzles 29 and 46) have previously failed solver verification — 
-these may be transcription issues in the puzzle XML. If you own the original toy, please verify these puzzles.
+- Some puzzles may have been transcribed incorrectly, if you own the original toy, please verify these puzzles.
 
 ## People who should have had better things to do
 [Turning the Lights Out in Three Dimensions.](https://scholar.rose-hulman.edu/cgi/viewcontent.cgi?article=1323&context=rhumj)

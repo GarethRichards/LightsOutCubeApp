@@ -28,45 +28,7 @@ jobs:
 
       - name: Run unit tests (vstest)
         shell: pwsh
-        run: |
-          # find built test assemblies under repo
-          $tests = Get-ChildItem -Path . -Recurse -Filter '*LightsOutCube.Tests*.dll' -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-          if (-not $tests) {
-            Write-Host 'No test assemblies found.'
-            exit 0
-          }
-
-          # locate Visual Studio installation using vswhere
-          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-          if (-not (Test-Path $vswhere)) {
-            Write-Host "vswhere not found at $vswhere; trying PATH"
-            $vswhere = 'vswhere.exe'
-          }
-          $installPath = & $vswhere -latest -products * -property installationPath 2>$null
-          if (-not $installPath) {
-            Write-Host "No Visual Studio installation found via vswhere; attempting to run vstest from PATH"
-          }
-
-          # candidate locations for vstest.console.exe
-          $candidates = @()
-          if ($installPath) {
-            $candidates += Join-Path $installPath 'Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
-            $candidates += Join-Path $installPath 'Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe'
-          }
-          $candidates += 'vstest.console.exe'  # fallback to PATH
-
-          $vstest = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $vstest) {
-            Write-Error "vstest.console.exe not found. Ensure Visual Studio Test Platform is installed on the runner."
-            exit 1
-          }
-
-          Write-Host "Using vstest: $vstest"
-          foreach ($t in $tests) {
-            Write-Host "Running tests in $t"
-            & $vstest $t
-            if ($LASTEXITCODE -ne 0) { throw "vstest failed for $t (exit $LASTEXITCODE)" }
-          }
+        run: dotnet test .\LightsOutCube.sln --configuration Release --no-build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

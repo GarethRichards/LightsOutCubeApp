@@ -16,4 +16,10 @@
   <ItemGroup>
     <ProjectReference Include="..\src\LightsOutCube.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Puzzle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

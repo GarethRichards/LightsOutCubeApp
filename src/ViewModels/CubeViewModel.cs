@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -13,17 +16,28 @@ namespace LightsOutCube.ViewModels
 {
     public class CubeViewModel : ObservableObject
     {
-        private readonly PuzzleModel puzzleModel = new PuzzleModel();
+        private readonly PuzzleModel _puzzleModel = new PuzzleModel();
 
         public CubeViewModel()
         {
             // Load puzzles into the ViewModel
             Cells = new ObservableCollection<CellViewModel>();
             CellsByIndex = new Dictionary<int, CellViewModel>();
-            puzzleModel.LoadPuzzles(LightsOutCube.Properties.Resources.Puzzle);
+
+            using (var stream = OpenPuzzleStream())
+            {
+                if (stream == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Puzzle.xml resource not found in any location.");
+                }
+                else
+                {
+                    _puzzleModel.LoadPuzzles(stream);
+                }
+            }
 
             PuzzleList = new ObservableCollection<int>();
-            var n = puzzleModel.Puzzles.FirstChild;
+            var n = _puzzleModel.Puzzles.FirstChild;
             for (int i = 0; i < n.ChildNodes.Count; i++)
                 PuzzleList.Add(i + 1);
 
@@ -102,7 +116,7 @@ namespace LightsOutCube.ViewModels
         }
 
         // Original Solved property (puzzle solved when puzzleModel.State == 0)
-        public bool Solved => puzzleModel.State == 0;
+        public bool Solved => _puzzleModel.State == 0;
 
         // Show-solution state moved into the ViewModel
         private bool _showSolution;
@@ -133,7 +147,7 @@ namespace LightsOutCube.ViewModels
 
         private void ResetPuzzle()
         {
-            puzzleModel.Reset();
+            _puzzleModel.Reset();
             PressCount = 0;
             // recompute solution for current puzzle state (after reset)
             ComputeSolutionForCurrentPuzzle();
@@ -144,7 +158,7 @@ namespace LightsOutCube.ViewModels
 
         public void SetPuzzle(int iPuzzle)
         {
-            puzzleModel.SetPuzzle(iPuzzle);
+            _puzzleModel.SetPuzzle(iPuzzle);
             // new puzzle -> reset press count and compute solution
             PressCount = 0;
             // hide any solution when puzzle changes
@@ -188,7 +202,7 @@ namespace LightsOutCube.ViewModels
         {
             // increment press count (the user pressed a button)
             PressCount++;
-            puzzleModel.Toggle(buttonIndex);
+            _puzzleModel.Toggle(buttonIndex);
             SetCube();
         }
 
@@ -223,7 +237,7 @@ namespace LightsOutCube.ViewModels
                 var cell = kvp.Value;
                 // mask: same mapping as original code (bit for index i is 1 << i)
                 long mask = 1L << i;
-                cell.IsOn = (puzzleModel.State & mask) != 0;
+                cell.IsOn = (_puzzleModel.State & mask) != 0;
             }
         }
 
@@ -280,7 +294,7 @@ namespace LightsOutCube.ViewModels
             {
                 var solver = new LightsOutCubeSolver();
                 // solver expects the current bitmask of lights; use puzzleModel.State
-                solver.SetCurrent(puzzleModel.State);
+                solver.SetCurrent(_puzzleModel.State);
 
                 // If your solver requires masks (bot/mid/top) call solver setters here.
                 if (solver.Solve())
@@ -322,6 +336,49 @@ namespace LightsOutCube.ViewModels
                 count++;
             }
             return count;
+        }
+
+        private static Stream OpenPuzzleStream()
+        {
+            // 1) Try WPF pack URI (when running as the app)
+            try
+            {
+                var ri = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/Resources/Puzzle.xml", UriKind.Absolute));
+                if (ri?.Stream != null)
+                    return ri.Stream;
+            }
+            catch { /* ignore */ }
+
+            // 2) Try manifest resource (if Puzzle.xml is Embedded Resource)
+            try
+            {
+                var asm = typeof(PuzzleModel).Assembly;
+                var names = asm.GetManifestResourceNames();
+                var candidate = names.FirstOrDefault(n => n.EndsWith("Resources.Puzzle.xml", StringComparison.OrdinalIgnoreCase)
+                                                       || n.EndsWith(".Puzzle.xml", StringComparison.OrdinalIgnoreCase));
+                if (candidate != null)
+                {
+                    var s = asm.GetManifestResourceStream(candidate);
+                    if (s != null) return s;
+                }
+            }
+            catch { /* ignore */ }
+
+            // 3) Try file on disk (Content, copied to output folder)
+            try
+            {
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Puzzle.xml");
+                if (File.Exists(path))
+                    return File.OpenRead(path);
+
+                // also try a simple filename fallback
+                path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Puzzle.xml");
+                if (File.Exists(path))
+                    return File.OpenRead(path);
+            }
+            catch { /* ignore */ }
+
+            return null;
         }
     }
 }

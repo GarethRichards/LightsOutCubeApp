@@ -46,4 +46,46 @@
         <GradientStop Color="#FF2C5364" Offset="1.0"/>
     </LinearGradientBrush>
 
+    <!-- 8. Crimson Dawn -->
+    <LinearGradientBrush x:Key="Gradient_CrimsonDawn" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF2C003E" Offset="0.0" />
+        <GradientStop Color="#FFB2456A" Offset="0.55" />
+        <GradientStop Color="#FFFF8A80" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- 9. Azure Night -->
+    <LinearGradientBrush x:Key="Gradient_AzureNight" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF0B3D91" Offset="0.0"/>
+        <GradientStop Color="#FF1E90FF" Offset="0.6"/>
+        <GradientStop Color="#FF8ED1FF" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 10. Forest Mist -->
+    <LinearGradientBrush x:Key="Gradient_ForestMist" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF0B3A2E" Offset="0.0"/>
+        <GradientStop Color="#FF157A6E" Offset="0.5"/>
+        <GradientStop Color="#FF9EEBCD" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 11. Magenta Aurora -->
+    <LinearGradientBrush x:Key="Gradient_MagentaAurora" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF3A0F5B" Offset="0.0"/>
+        <GradientStop Color="#FFD53A7B" Offset="0.5"/>
+        <GradientStop Color="#FFFFE29F" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 12. Golden Hour -->
+    <LinearGradientBrush x:Key="Gradient_GoldenHour" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF2A1A04" Offset="0.0"/>
+        <GradientStop Color="#FFFFB347" Offset="0.5"/>
+        <GradientStop Color="#FFFFE0A8" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- 13. Cool Mint -->
+    <LinearGradientBrush x:Key="Gradient_CoolMint" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FF0F2027" Offset="0.0"/>
+        <GradientStop Color="#FF1FD1C8" Offset="0.6"/>
+        <GradientStop Color="#FFB8FFF4" Offset="1.0"/>
+    </LinearGradientBrush>
+
 </ResourceDictionary>

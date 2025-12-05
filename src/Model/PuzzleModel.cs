@@ -1,11 +1,6 @@
 ﻿using LightsOutCube.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
+using System.IO;
 using System.Xml;
 
 namespace LightsOutCube.Model
@@ -35,10 +30,14 @@ namespace LightsOutCube.Model
             get => initialState;
         }
 
-        public void LoadPuzzles(string xml)
+        public void LoadPuzzles(Stream stream)
         {
-            if (string.IsNullOrWhiteSpace(xml)) throw new ArgumentException(nameof(xml));
-            puzzles.LoadXml(xml);
+            string puzzlesXml;
+            using (var sr = new StreamReader(stream))
+            {
+                puzzlesXml = sr.ReadToEnd();
+            }
+            puzzles.LoadXml(puzzlesXml);
         }
 
         public void SetPuzzle(int iPuzzle)

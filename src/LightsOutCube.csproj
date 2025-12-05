@@ -52,6 +52,7 @@
   <ItemGroup>
     <None Remove="Resources\Intro.wav" />
     <None Remove="Resources\MainIcon.ico" />
+    <None Remove="Resources\Puzzle.xml" />
     <None Remove="Resources\Side1.png" />
     <None Remove="Resources\Side2.png" />
     <None Remove="Resources\Side3.png" />
@@ -68,6 +69,7 @@
     <Resource Include="Resources\Intro.wav">
       <CopyToOutputDirectory></CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Resources\Puzzle.xml" />
     <Resource Include="Resources\Side1.png" />
     <Resource Include="Resources\Side2.png" />
     <Resource Include="Resources\Side3.png" />

@@ -16,15 +16,6 @@
     </Window.InputBindings>
     <DockPanel>
         <Grid Name="MainGrid">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <LinearGradientBrush.GradientStops>
-                        <GradientStop Color="{Binding GradientStart}" Offset="0"/>
-                        <GradientStop Color="{Binding GradientEnd}" Offset="1"/>
-                    </LinearGradientBrush.GradientStops>
-                </LinearGradientBrush>
-            </Grid.Background>
-
             <!-- Viewport3D (unchanged) -->
             <Viewport3D Name="CubeViewport" Focusable="True" IsHitTestVisible="True" ClipToBounds="True" Grid.Column="0" Grid.Row="0">
                 <Viewport3D.Camera>

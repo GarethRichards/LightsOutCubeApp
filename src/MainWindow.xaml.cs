@@ -4,6 +4,7 @@ using LightsOutCube.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq; // added for resource key discovery
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -92,13 +93,13 @@ namespace LightsOutCube
             {
                 EventSource = EventSourceBorder
             };
-
             _yellowMaterial = new DiffuseMaterial(new SolidColorBrush(Colors.Yellow));
             _defaultMaterial = (Material)System.Windows.Application.Current.Resources["myFunkyMaterial"];
 
             // solution material (distinct, can tweak color)
             _solutionMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xFF)));
 
+            GradientManager.AnimateBackgroundToRandomGradient(MainGrid, durationMs: 800);
             _cubes.Add(myCube, -1);
             // create a couple extra cubes
             double ti, tj;

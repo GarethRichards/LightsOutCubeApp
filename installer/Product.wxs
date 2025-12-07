@@ -42,16 +42,16 @@
          input to the compiler. -->
 
     <!-- Shortcuts & registration (non-advertised desktop/start-menu shortcut) -->
-    <!-- Reference the start-menu folder created by the harvest file -->
-    <DirectoryRef Id="LightsOutCubeProgramsFolder">
+    <!-- Create shortcut in the Program Menu folder (avoid referencing a harvested subfolder id) -->
+    <DirectoryRef Id="ProgramMenuFolder">
       <Component Id="cmp_Shortcut" Guid="b5b6f7a1-1d2e-4fd6-9fb9-3c8e2a9d7f4b">
         <!-- Non-advertised shortcut (Target points to the installed exe path). -->
         <Shortcut Id="desktopShortcut" Name="Lights Out Cube"
-                  Directory="LightsOutCubeProgramsFolder"
+                  Directory="ProgramMenuFolder"
                   WorkingDirectory="INSTALLFOLDER"
                   Target="[INSTALLFOLDER]LightsOutCube.exe" />
         <!-- Remove the shortcut file on uninstall -->
-        <RemoveFile Id="RemoveDesktopShortcut" Name="Lights Out Cube.lnk" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
+        <RemoveFile Id="RemoveDesktopShortcut" Name="Lights Out Cube.lnk" Directory="ProgramMenuFolder" On="uninstall" />
 
         <RegistryValue Root="HKCU" Key="Software\LightsOutCube" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
       </Component>

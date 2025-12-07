@@ -32,6 +32,12 @@
     -->
     <!-- include the harvested fragment at build time; ensure candle sees both files -->
     <!-- Example: candle installer\Product.wxs installer\harvest.wxs -->
+    <!--
+      Define a default for HarvestExists so the preprocessor conditional below
+      does not error when the variable isn't provided by the build environment.
+      CI can pass -dHarvestExists=1 to candle when harvest.wxs is available.
+    -->
+    <?define HarvestExists = 0 ?>
     <?if $(var.HarvestExists) ?>
       <?include harvest.wxs ?>
     <?endif?>

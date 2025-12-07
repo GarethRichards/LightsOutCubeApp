@@ -22,7 +22,7 @@
 
       <!-- Start menu / Programs folder for shortcuts -->
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="LightsOutCubeProgramsFolder" Name="LightsOutCube" />
+        <!-- Start menu subfolders are provided by the harvested fragment (harvest.wxs). Do not redefine here. -->
       </Directory>
     </Directory>
 
@@ -42,21 +42,19 @@
          input to the compiler. -->
 
     <!-- Shortcuts & registration (non-advertised desktop/start-menu shortcut) -->
-    <DirectoryRef Id="ProgramMenuFolder">
-      <Directory Id="LightsOutCubeProgramsFolder" Name="LightsOutCube">
-        <Component Id="cmp_Shortcut" Guid="b5b6f7a1-1d2e-4fd6-9fb9-3c8e2a9d7f4b">
-          <!-- Non-advertised shortcut (Target points to the installed exe path). -->
-          <Shortcut Id="desktopShortcut" Name="Lights Out Cube"
-                    Directory="LightsOutCubeProgramsFolder"
-                    WorkingDirectory="INSTALLFOLDER"
-                    Target="[INSTALLFOLDER]LightsOutCube.exe" />
-          <!-- Remove the shortcut file on uninstall (needed for ICE64 when folder is in user profile) -->
-          <RemoveFile Id="RemoveDesktopShortcut" Name="Lights Out Cube.lnk" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
-          <RemoveFolder Id="RemoveProgramsFolder" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
+    <!-- Reference the start-menu folder created by the harvest file -->
+    <DirectoryRef Id="LightsOutCubeProgramsFolder">
+      <Component Id="cmp_Shortcut" Guid="b5b6f7a1-1d2e-4fd6-9fb9-3c8e2a9d7f4b">
+        <!-- Non-advertised shortcut (Target points to the installed exe path). -->
+        <Shortcut Id="desktopShortcut" Name="Lights Out Cube"
+                  Directory="LightsOutCubeProgramsFolder"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Target="[INSTALLFOLDER]LightsOutCube.exe" />
+        <!-- Remove the shortcut file on uninstall -->
+        <RemoveFile Id="RemoveDesktopShortcut" Name="Lights Out Cube.lnk" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
 
-          <RegistryValue Root="HKCU" Key="Software\LightsOutCube" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
-        </Component>
-      </Directory>
+        <RegistryValue Root="HKCU" Key="Software\LightsOutCube" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
     </DirectoryRef>
 
     <!-- Feature tree: include harvested app files and the shortcut component -->

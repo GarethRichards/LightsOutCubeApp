@@ -42,7 +42,8 @@
 
         <!-- High scores tab -->
         <TabItem Header="High Scores">
-            <Border Padding="12" CornerRadius="6" Background="#DD111217" MinWidth="520" MinHeight="240">
+            <Border Padding="12" CornerRadius="6" Background="#DD111217"
+                    MinWidth="520" MinHeight="240" MaxHeight="550">
                 <DockPanel LastChildFill="True">
                     <ListView x:Name="HighScoresListView" Background="#DD111217" Foreground="White" BorderThickness="0" ItemsSource="{Binding HighScores}" ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListView.Resources>
@@ -101,7 +102,8 @@
 
         <!-- Speed Runs tab -->
         <TabItem Header="Speed Runs">
-            <Border Padding="12" CornerRadius="6" Background="#DD111217" MinWidth="520" MinHeight="240">
+            <Border Padding="12" CornerRadius="6" Background="#DD111217" 
+                    MinWidth="520" MinHeight="240" MaxHeight="550">
                 <DockPanel LastChildFill="True">
                     <!-- toolbar removed: SpeedRuns refresh occurs automatically -->
 

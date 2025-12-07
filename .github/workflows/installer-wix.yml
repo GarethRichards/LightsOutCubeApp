@@ -23,9 +23,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-artifact
-          # upload project outputs from src/*/bin/Release
+          # upload project outputs for .NET Framework 4.8 builds (net48)
           path: |
-            src/**/bin/Release/**
+            src/**/bin/Release/net48/**
 
   build-installer:
     name: Build installer (WiX)

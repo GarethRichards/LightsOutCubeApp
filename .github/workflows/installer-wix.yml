@@ -20,10 +20,18 @@ jobs:
       - name: Install WiX (choco)
         run: choco install wixtoolset -y
 
-      - name: Build WiX (candle + light)
+      - name: Build WiX (heat + candle + light)
         run: |
           $env:WIX = (Get-ChildItem 'C:\Program Files (x86)\WiX Toolset*v*' | Select-Object -First 1).FullName
-          & "$env:WIX\bin\candle.exe" -dLightsOutCube="src\bin\Release" installer\Product.wxs -out installer\Product.wixobj
+          Write-Host "Using WiX at: $env:WIX"
+
+          # Generate harvest.wxs from the built application output. Adjust path if your build outputs elsewhere.
+          & "$env:WIX\bin\heat.exe" dir "src\bin\Release" -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
+
+          # Compile both Product.wxs and generated harvest.wxs. Define HarvestExists so Product.wxs will include the fragment.
+          & "$env:WIX\bin\candle.exe" -dHarvestExists=1 installer\Product.wxs installer\harvest.wxs -out installer\Product.wixobj
+
+          # Link to produce MSI
           & "$env:WIX\bin\light.exe" installer\Product.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI

@@ -59,13 +59,15 @@ jobs:
           Write-Host "Harvesting files from: $appOut"
 
           # generate harvest.wxs from the exact output folder
-          & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
+          # use -var to make Source paths use a preprocessor variable we can define when compiling
+          & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -var var.SourceDir -out "installer\harvest.wxs"
 
           # ensure object folder for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null
 
           # compile both Product.wxs and generated harvest.wxs into installer\obj\
-          & "$env:WIX\bin\candle.exe" installer\Product.wxs installer\harvest.wxs -out installer\obj\
+          # compile with SourceDir preprocessor define so harvested Source paths resolve
+          & "$env:WIX\bin\candle.exe" -dSourceDir="$appOut" installer\Product.wxs installer\harvest.wxs -out installer\obj\
 
           # link wixobj files into an MSI
           & "$env:WIX\bin\light.exe" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi

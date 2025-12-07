@@ -25,14 +25,17 @@ jobs:
           $env:WIX = (Get-ChildItem 'C:\Program Files (x86)\WiX Toolset*v*' | Select-Object -First 1).FullName
           Write-Host "Using WiX at: $env:WIX"
 
-          # Generate harvest.wxs from the built application output. Adjust path if your build outputs elsewhere.
+          # Generate harvest.wxs from the built application output
           & "$env:WIX\bin\heat.exe" dir "src\bin\Release" -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
 
-          # Compile both Product.wxs and generated harvest.wxs. Define HarvestExists so Product.wxs will include the fragment.
-          & "$env:WIX\bin\candle.exe" -dHarvestExists=1 installer\Product.wxs installer\harvest.wxs -out installer\Product.wixobj
+          # Ensure output directory for wixobj files
+          New-Item -ItemType Directory -Force -Path installer\obj | Out-Null
 
-          # Link to produce MSI
-          & "$env:WIX\bin\light.exe" installer\Product.wixobj -out installer\LightsOutCube.msi
+          # Compile both Product.wxs and generated harvest.wxs; -out is a directory when multiple inputs
+          & "$env:WIX\bin\candle.exe" -dHarvestExists=1 installer\Product.wxs installer\harvest.wxs -out installer\obj\
+
+          # Link to produce MSI from generated wixobj files
+          & "$env:WIX\bin\light.exe" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI
         uses: actions/upload-artifact@v4

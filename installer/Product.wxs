@@ -19,7 +19,7 @@
 
       <!-- Start menu / Programs folder for shortcuts -->
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="LightsOutCubeProgramsFolder" Name="LightsOutCube" />
+        <Directory Id="LightsOutCubeStartMenuFolder" Name="LightsOutCube" />
       </Directory>
     </Directory>
 

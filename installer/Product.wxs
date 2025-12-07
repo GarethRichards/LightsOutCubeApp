@@ -11,6 +11,9 @@
            Manufacturer="Gareth Richards" UpgradeCode="d2f7b0a4-6c6f-4f2d-9b1a-5b8b2f9d3c3f">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
 
+    <!-- Add this Media element to satisfy harvested file references -->
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
     <!-- Target folder (ProgramFilesFolder\LightsOutCube) -->
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">

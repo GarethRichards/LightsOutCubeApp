@@ -19,7 +19,7 @@
 
       <!-- Start menu / Programs folder for shortcuts -->
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder_LightsOutCube" Name="LightsOutCube" />
+        <Directory Id="ApplicationProgramsFolder_LightsOutCube_Product" Name="LightsOutCube" />
       </Directory>
     </Directory>
 
@@ -40,14 +40,14 @@
 
     <!-- Shortcuts & registration (non-advertised desktop/start-menu shortcut) -->
     <DirectoryRef Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder_LightsOutCube" Name="LightsOutCube">
+      <Directory Id="ApplicationProgramsFolder_LightsOutCube_Product" Name="LightsOutCube">
         <Component Id="cmp_Shortcut" Guid="b5b6f7a1-1d2e-4fd6-9fb9-3c8e2a9d7f4b">
           <!-- Non-advertised shortcut (Target points to the installed exe path). -->
           <Shortcut Id="desktopShortcut" Name="Lights Out Cube"
-                    Directory="ApplicationProgramsFolder_LightsOutCube"
+                    Directory="ApplicationProgramsFolder_LightsOutCube_Product"
                     WorkingDirectory="INSTALLFOLDER"
                     Target="[INSTALLFOLDER]LightsOutCube.exe" />
-          <RemoveFolder Id="RemoveProgramsFolder" Directory="ApplicationProgramsFolder_LightsOutCube" On="uninstall" />
+          <RemoveFolder Id="RemoveProgramsFolder" Directory="ApplicationProgramsFolder_LightsOutCube_Product" On="uninstall" />
           
           
           <RegistryValue Root="HKCU" Key="Software\LightsOutCube" Name="installed" Type="integer" Value="1" KeyPath="yes"/>

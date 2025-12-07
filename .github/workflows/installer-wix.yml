@@ -49,7 +49,7 @@ jobs:
           Write-Host "Using WiX at: $env:WIX"
 
           # Generate harvest.wxs from the downloaded build artifacts
-          & "$env:WIX\bin\heat.exe" dir "dist" -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
+          & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
 
           # Ensure output directory for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null

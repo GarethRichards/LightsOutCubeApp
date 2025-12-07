@@ -169,9 +169,9 @@ namespace LightsOutCube
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // guard to avoid multiple celebrations
-            if (e.PropertyName == nameof(_viewModel.Solved) && _viewModel.Solved && !_celebrationRunning)
+            if (e.PropertyName == nameof(_viewModel.Solved) && _viewModel.Solved && !_celebrationRunning
+                && !_viewModel.IsSpeedRunMode)
             {
-                // Ensure any solution highlight is hidden when solved (ViewModel will have set ShowSolution=false)
                 Application.Current.Dispatcher.Invoke(() => ShowSolvedEffects());
             }
 
@@ -716,7 +716,7 @@ namespace LightsOutCube
             }
             catch (Exception ex)
             {
-                //Debug.WriteLine($"DisplaySolutionForCurrentPuzzle error: {ex}");
+                System.Diagnostics.Debug.WriteLine($"DisplaySolutionForCurrentPuzzle error: {ex}");
             }
         }
 

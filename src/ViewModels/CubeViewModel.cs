@@ -11,15 +11,62 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Diagnostics;
+using System.Windows.Threading;
 
 namespace LightsOutCube.ViewModels
 {
     public class CubeViewModel : ObservableObject
     {
+        private const int SpeedRunPuzzleId = 0; // sentinel id selected in the drop-down to start a speed run
+
         private readonly PuzzleModel _puzzleModel = new PuzzleModel();
+        private readonly Stopwatch _solveTimer = new Stopwatch();
+        private readonly Stopwatch _speedRunStopwatch = new Stopwatch();
+        private readonly LightsOutCube.Model.ScoreStore _scoreStore = new LightsOutCube.Model.ScoreStore();
+
+        // UI timer to update elapsed display
+        private readonly DispatcherTimer _uiTimer;
+
+        // speed-run state
+        private bool _isSpeedRunMode;
+        public bool IsSpeedRunMode
+        {
+            get => _isSpeedRunMode;
+            private set => SetProperty(ref _isSpeedRunMode, value);
+        }
+
+        private readonly List<ScoreRecord> _speedRunRecords = new List<ScoreRecord>();
+        public IReadOnlyList<ScoreRecord> SpeedRunRecords => _speedRunRecords.AsReadOnly();
+
+        private int _speedRunSolvedCount;
+        public int SpeedRunSolvedCount
+        {
+            get => _speedRunSolvedCount;
+            private set => SetProperty(ref _speedRunSolvedCount, value);
+        }
+
+        public TimeSpan SpeedRunElapsed => _speedRunStopwatch.Elapsed;
+
+        // formatted text for binding (bind this in XAML)
+        public string SpeedRunElapsedText => FormatDuration(SpeedRunElapsed);
+
+        // used to detect solved transitions (so we call the solved handling once)
+        private bool _wasSolved;
 
         public CubeViewModel()
         {
+            // UI timer setup (updates elapsed display ~10x/sec)
+            _uiTimer = new DispatcherTimer(
+                TimeSpan.FromMilliseconds(100),                 // update ~10x/sec (adjustable)
+                DispatcherPriority.Normal,
+                (s, e) =>
+                {
+                    if (IsSpeedRunMode)
+                        OnPropertyChanged(nameof(SpeedRunElapsedText));
+                },
+                Dispatcher.CurrentDispatcher);
+
             // Load puzzles into the ViewModel
             Cells = new ObservableCollection<CellViewModel>();
             CellsByIndex = new Dictionary<int, CellViewModel>();
@@ -41,16 +88,21 @@ namespace LightsOutCube.ViewModels
             for (int i = 0; i < n.ChildNodes.Count; i++)
                 PuzzleList.Add(i + 1);
 
+            // add a special item at the start for Speed Run (UI can render this sentinel as "Speed Run")
+            PuzzleList.Insert(0, SpeedRunPuzzleId);
+
             ResetCommand = new RelayCommand(ResetPuzzle);
 
             // initialize state
             _pressCount = 0;
             _solutionMask = 0L;
             _solutionPressCount = 0;
+            _wasSolved = false;
 
             // command to toggle showing solution (View binds to this)
             ToggleShowSolutionCommand = new RelayCommand(ToggleShowSolution);
 
+            // default to first real puzzle
             SelectedPuzzle = 1;
         }
 
@@ -139,6 +191,7 @@ namespace LightsOutCube.ViewModels
 
         private void ToggleShowSolution()
         {
+            EndSpeedRun();
             ShowSolution = !ShowSolution;
         }
 
@@ -154,6 +207,10 @@ namespace LightsOutCube.ViewModels
             SetCube();
             // ensure solution hidden after reset
             ShowSolution = false;
+
+            // reset timers / solved tracking for a fresh puzzle
+            _solveTimer.Reset();
+            _wasSolved = false;
         }
 
         public void SetPuzzle(int iPuzzle)
@@ -164,6 +221,8 @@ namespace LightsOutCube.ViewModels
             // hide any solution when puzzle changes
             ShowSolution = false;
             SetCube();
+            // start per-puzzle timer
+            OnPuzzleStarted();
             ComputeSolutionForCurrentPuzzle();
             OnPropertyChanged(nameof(SolvedBannerText));
             OnPropertyChanged(nameof(SolvedBannerAdditional));
@@ -175,6 +234,9 @@ namespace LightsOutCube.ViewModels
             // Ensure cells have been initialised by the View
             if (CellsByIndex == null || CellsByIndex.Count == 0)
                 return;
+
+            // capture previous solved state so we only run solved handling once on transition
+            var previouslySolved = _wasSolved;
 
             // Update CellViewModel.IsOn flags from the puzzle model state
             UpdateCellsFromState();
@@ -194,6 +256,41 @@ namespace LightsOutCube.ViewModels
             if (Solved)
             {
                 ShowSolution = false;
+
+                // call solved handling only once when the puzzle becomes solved
+                if (!previouslySolved)
+                {
+                    _wasSolved = true;
+                    var rec = OnPuzzleSolved(); // creates and persists per-puzzle record
+                    // if we are in speed-run mode collect the per-puzzle record and continue/finish run
+                    if (IsSpeedRunMode)
+                    {
+                        if (rec != null)
+                            _speedRunRecords.Add(rec);
+
+                        SpeedRunSolvedCount++;
+
+                        // advance to next puzzle if available, otherwise end speed run
+                        int maxPuzzle = PuzzleList.Where(x => x != SpeedRunPuzzleId).DefaultIfEmpty(1).Max();
+                        if (_selectedPuzzle < maxPuzzle)
+                        {
+                            // move to next puzzle and continue the run
+                            // set backing field directly to avoid re-triggering StartSpeedRun
+                            _selectedPuzzle = _selectedPuzzle + 1;
+                            OnPropertyChanged(nameof(SelectedPuzzle));
+                            SetPuzzle(_selectedPuzzle);
+                        }
+                        else
+                        {
+                            EndSpeedRun();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // ensure solved tracking cleared while puzzle is not solved
+                _wasSolved = false;
             }
         }
 
@@ -202,6 +299,7 @@ namespace LightsOutCube.ViewModels
         {
             // increment press count (the user pressed a button)
             PressCount++;
+
             _puzzleModel.Toggle(buttonIndex);
             SetCube();
         }
@@ -247,6 +345,20 @@ namespace LightsOutCube.ViewModels
             get => _selectedPuzzle;
             set
             {
+                // if user selects the Speed Run sentinel, start the mode
+                if (value == SpeedRunPuzzleId && !_isSpeedRunMode)
+                {
+                    StartSpeedRun();
+                    return;
+                }
+
+                // if a user manually changes the selected puzzle while a speed run is active,
+                // exit speed run mode so manual selection takes precedence.
+                if (_isSpeedRunMode && value != SpeedRunPuzzleId)
+                {
+                    EndSpeedRun();
+                }
+
                 if (SetProperty(ref _selectedPuzzle, value))
                 {
                     SetPuzzle(value);
@@ -255,6 +367,63 @@ namespace LightsOutCube.ViewModels
                     OnPropertyChanged(nameof(SolvedBannerText));
                     OnPropertyChanged(nameof(SolvedBannerAdditional));
                 }
+            }
+        }
+
+        // start a speed run: reset counters, start total stopwatch and select first puzzle
+        private void StartSpeedRun()
+        {
+            IsSpeedRunMode = true;
+            _speedRunRecords.Clear();
+            SpeedRunSolvedCount = 0;
+            _speedRunStopwatch.Restart();
+            _uiTimer.Start();
+            // immediate update so UI shows 0.000s right away
+            OnPropertyChanged(nameof(SpeedRunElapsedText));
+
+            // select first real puzzle (first non-sentinel entry)
+            var firstPuzzle = PuzzleList.FirstOrDefault(x => x != SpeedRunPuzzleId);
+            if (firstPuzzle == 0) firstPuzzle = 1;
+            // set backing field and notify so UI shows correct selection
+            _selectedPuzzle = firstPuzzle;
+            OnPropertyChanged(nameof(SelectedPuzzle));
+
+            // set puzzle to begin the run
+            SetPuzzle(firstPuzzle);
+        }
+
+        // finish a speed run
+        private void EndSpeedRun()
+        {
+            _speedRunStopwatch.Stop();
+            _uiTimer.Stop();
+            IsSpeedRunMode = false;
+            // final update so UI shows final time
+            OnPropertyChanged(nameof(SpeedRunElapsedText));
+            // Optionally: persist a summary, surface UI notification or expose SpeedRunRecords to other components.
+            // For now, callers can read SpeedRunSolvedCount, SpeedRunElapsed and SpeedRunRecords.
+            // Persist last speed run summary (last puzzle solved + per-puzzle times)
+            try
+            {
+                if (_speedRunRecords.Count > 0)
+                {
+                    var summary = new SpeedRunSummary
+                    {
+                        Timestamp = DateTimeOffset.UtcNow,
+                        LastPuzzleSolved = _speedRunRecords.Last().PuzzleId,
+                        TimesMs = _speedRunRecords.Select(r => (long)r.Duration.TotalMilliseconds).ToList(),
+                        PressCounts = _speedRunRecords.Select(r => r.PressCount).ToList(),
+                        IsPerfect = _speedRunRecords.Select(r => r.IsPerfect).ToList(),
+                        TotalElapsedMs = (long)_speedRunStopwatch.Elapsed.TotalMilliseconds,
+                        SolvedCount = _speedRunRecords.Count
+                    };
+
+                    _scoreStore.SaveLastSpeedRun(summary);
+                }
+            }
+            catch
+            {
+                // best-effort persistence; swallow errors
             }
         }
 
@@ -379,6 +548,59 @@ namespace LightsOutCube.ViewModels
             catch { /* ignore */ }
 
             return null;
+        }
+
+        // call when puzzle starts (example method)
+        private void OnPuzzleStarted()
+        {
+            _solveTimer.Restart();
+        }
+
+        // call when puzzle solved
+        // returns the created ScoreRecord (or null on error) so callers (eg speed run) can collect it
+        private ScoreRecord OnPuzzleSolved()
+        {
+            try
+            {
+                _solveTimer.Stop();
+                var elapsed = _solveTimer.Elapsed;
+                int presses = this.PressCount; // already tracked in your VM
+                // Determine perfect: prefer comparing to minimal moves if solver exposes it:
+                bool isPerfect = false;
+                if (this.SolutionPressCount > 0) // SolutionPressCount = minimal presses from solver
+                    isPerfect = (presses == this.SolutionPressCount);
+
+                var record = new LightsOutCube.Model.ScoreRecord
+                {
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Duration = elapsed,
+                    PressCount = presses,
+                    IsPerfect = isPerfect,
+                    PuzzleId = this.SelectedPuzzle.ToString(),
+                    AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString()
+                };
+
+                // Persist only if this is the first record for the puzzle or faster than the stored best
+                _scoreStore.AddIfBest(record);
+
+                return record;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                // reset per-puzzle timer so next puzzle starts fresh; if in speed run the run stopwatch keeps running
+                _solveTimer.Reset();
+            }
+        }
+
+        private static string FormatDuration(TimeSpan ts)
+        {
+            if (ts.TotalMinutes >= 1)
+                return ts.ToString(@"mm\:ss\.fff");
+            return ts.ToString(@"s\.fff") + "s";
         }
     }
 }

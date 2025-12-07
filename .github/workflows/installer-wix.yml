@@ -1,0 +1,33 @@
+name: Build Installer (WiX)
+
+on:
+  push: { branches: [ main ] }
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Restore & Build app
+        run: |
+          nuget restore LightsOutCube.sln
+          msbuild LightsOutCube.sln /p:Configuration=Release /m
+
+      - name: Install WiX (choco)
+        run: choco install wixtoolset -y
+
+      - name: Build WiX (candle + light)
+        run: |
+          $env:WIX = (Get-ChildItem 'C:\Program Files (x86)\WiX Toolset*v*' | Select-Object -First 1).FullName
+          & "$env:WIX\bin\candle.exe" -dLightsOutCube="src\bin\Release" installer\Product.wxs -out installer\Product.wixobj
+          & "$env:WIX\bin\light.exe" installer\Product.wixobj -out installer\LightsOutCube.msi
+
+      - name: Upload MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: lightsoutcube-msi
+          path: installer\LightsOutCube.msi

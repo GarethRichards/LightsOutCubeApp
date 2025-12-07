@@ -22,7 +22,7 @@
 
       <!-- Start menu / Programs folder for shortcuts -->
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="LightsOutCubeStartMenuFolder" Name="LightsOutCube" />
+        <Directory Id="LightsOutCubeProgramsFolder" Name="LightsOutCube" />
       </Directory>
     </Directory>
 
@@ -50,9 +50,10 @@
                     Directory="LightsOutCubeProgramsFolder"
                     WorkingDirectory="INSTALLFOLDER"
                     Target="[INSTALLFOLDER]LightsOutCube.exe" />
+          <!-- Remove the shortcut file on uninstall (needed for ICE64 when folder is in user profile) -->
+          <RemoveFile Id="RemoveDesktopShortcut" Name="Lights Out Cube.lnk" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
           <RemoveFolder Id="RemoveProgramsFolder" Directory="LightsOutCubeProgramsFolder" On="uninstall" />
-          
-          
+
           <RegistryValue Root="HKCU" Key="Software\LightsOutCube" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
         </Component>
       </Directory>

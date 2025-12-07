@@ -48,16 +48,26 @@ jobs:
           $env:WIX = (Get-ChildItem 'C:\Program Files (x86)\WiX Toolset*v*' | Select-Object -First 1).FullName
           Write-Host "Using WiX at: $env:WIX"
 
-          # Generate harvest.wxs from the downloaded build artifacts
+          # locate the built exe inside the downloaded artifact (dist)
+          $appExe = Get-ChildItem -Path dist -Recurse -Filter LightsOutCube.exe | Select-Object -First 1
+          if (-not $appExe) {
+            Write-Error "LightsOutCube.exe not found under 'dist'. Listing dist for debugging:"
+            Get-ChildItem -Path dist -Recurse | ForEach-Object { Write-Host $_.FullName }
+            exit 1
+          }
+          $appOut = $appExe.DirectoryName
+          Write-Host "Harvesting files from: $appOut"
+
+          # generate harvest.wxs from the exact output folder
           & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
 
-          # Ensure output directory for wixobj files
+          # ensure object folder for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null
 
-          # Compile both Product.wxs and generated harvest.wxs into installer\obj\
+          # compile both Product.wxs and generated harvest.wxs into installer\obj\
           & "$env:WIX\bin\candle.exe" installer\Product.wxs installer\harvest.wxs -out installer\obj\
 
-          # Link to produce MSI from generated wixobj files
+          # link wixobj files into an MSI
           & "$env:WIX\bin\light.exe" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI

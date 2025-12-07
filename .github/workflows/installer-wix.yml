@@ -1,10 +1,12 @@
-name: Build Installer (WiX)
+name: Build and Package (WiX)
 
 on:
-  push: { branches: [ main ] }
+  push:
+    branches: [ main ]
 
 jobs:
-  build-installer:
+  build-app:
+    name: Build application
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +19,27 @@ jobs:
           nuget restore LightsOutCube.sln
           msbuild LightsOutCube.sln /p:Configuration=Release /m
 
+      - name: Upload app artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-artifact
+          # upload project outputs from src/*/bin/Release
+          path: |
+            src/**/bin/Release/**
+
+  build-installer:
+    name: Build installer (WiX)
+    runs-on: windows-latest
+    needs: build-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download app artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-artifact
+          path: dist
+
       - name: Install WiX (choco)
         run: choco install wixtoolset -y
 
@@ -25,14 +48,14 @@ jobs:
           $env:WIX = (Get-ChildItem 'C:\Program Files (x86)\WiX Toolset*v*' | Select-Object -First 1).FullName
           Write-Host "Using WiX at: $env:WIX"
 
-          # Generate harvest.wxs from the built application output
-          & "$env:WIX\bin\heat.exe" dir "src\bin\Release" -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
+          # Generate harvest.wxs from the downloaded build artifacts
+          & "$env:WIX\bin\heat.exe" dir "dist" -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -out "installer\harvest.wxs"
 
           # Ensure output directory for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null
 
-          # Compile both Product.wxs and generated harvest.wxs; -out is a directory when multiple inputs
-          & "$env:WIX\bin\candle.exe" -dHarvestExists=1 installer\Product.wxs installer\harvest.wxs -out installer\obj\
+          # Compile both Product.wxs and generated harvest.wxs into installer\obj\
+          & "$env:WIX\bin\candle.exe" installer\Product.wxs installer\harvest.wxs -out installer\obj\
 
           # Link to produce MSI from generated wixobj files
           & "$env:WIX\bin\light.exe" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi

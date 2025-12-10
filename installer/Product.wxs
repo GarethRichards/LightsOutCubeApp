@@ -95,11 +95,13 @@
     </Property>
 
     <Condition Message=".NET Framework 4.8 or later is required.">
-      <![CDATA[Installed OR ((NETFRAMEWORK48_64 AND NETFRAMEWORK48_64 >= "528040") OR (NETFRAMEWORK48_32 AND NETFRAMEWORK48_32 >= "528040"))]]>
+      <![CDATA[Installed OR ((NETFRAMEWORK48_64 AND NETFRAMEWORK48_64 >= 528040) OR (NETFRAMEWORK48_32 AND NETFRAMEWORK48_32 >= 528040))]]>
     </Condition>
 
     <!-- Metadata for Add/Remove Programs -->
     <Property Id="ARPCONTACT" Value="Gareth Richards" />
+    <Property Id="ARPPRODUCTNAME" Value="Lights Out Cube" />
+    <Property Id="ARPPUBLISHER" Value="Gareth Richards" />
 
   </Product>
 </Wix>

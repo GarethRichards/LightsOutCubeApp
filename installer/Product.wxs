@@ -78,12 +78,28 @@
     <!-- .NET Framework 4.8 detection via registry; Release >= 528040 indicates 4.8 -->
     <!-- Search both the 64-bit and 32-bit registry hives to be robust regardless of process bitness. -->
 
-    <!-- Register the property provided by the NetFxExtension -->
-    <PropertyRef Id="NETFRAMEWORK48" />
+    <!-- .NET Framework 4.8 detection via registry; Release >= 528040 indicates 4.8 -->
+    <!-- Search both the 64-bit and 32-bit registry hives to be robust regardless of process bitness. -->
+    <Property Id="NETFRAMEWORK48_64">
+      <RegistrySearch Id="NetFramework48Release64"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+                      Name="Release"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
 
-    <!-- Condition uses the NetFxExtension property (true when .NET 4.8+ is present) -->
+    <Property Id="NETFRAMEWORK48_32">
+      <RegistrySearch Id="NetFramework48Release32"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+                      Name="Release"
+                      Type="raw"
+                      Win64="no" />
+    </Property>
+
     <Condition Message="This product requires Microsoft .NET Framework 4.8 or higher. Please install .NET 4.8 then run this installer again.">
-      <![CDATA[Installed OR NETFRAMEWORK48]]>
+      <![CDATA[Installed OR ((NETFRAMEWORK48_64 AND NETFRAMEWORK48_64 >= 528040) OR (NETFRAMEWORK48_32 AND NETFRAMEWORK48_32 >= 528040))]]>
     </Condition>
 
     <!-- Metadata for Add/Remove Programs -->

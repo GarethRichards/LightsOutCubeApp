@@ -84,7 +84,7 @@ jobs:
           }
 
           # link wixobj files into an MSI using the same explicit extension DLL (only load once)
-          & "$env:WIX\bin\light.exe" -ext $netfxExt installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
+          & "$env:WIX\bin\light.exe" -ext $netfxExt -ext "$env:WIX\bin\WixUtilExtension.dll" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI
         uses: actions/upload-artifact@v4

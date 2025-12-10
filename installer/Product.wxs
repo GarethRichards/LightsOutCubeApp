@@ -100,7 +100,6 @@
 
     <!-- Metadata for Add/Remove Programs -->
     <Property Id="ARPCONTACT" Value="Gareth Richards" />
-    <Property Id="ARPPRODUCTICON" Value="appIcon.ico" /> <!-- optional, include file in harvest if used -->
 
   </Product>
 </Wix>

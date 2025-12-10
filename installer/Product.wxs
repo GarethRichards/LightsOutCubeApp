@@ -68,11 +68,14 @@
 
     <!-- .NET Framework 4.8 detection via registry; Release >= 528040 indicates 4.8 -->
     <Property Id="NETFRAMEWORK48">
+      <!-- Perform the registry search against the 64-bit registry hive so 64-bit systems (Windows 11)
+           report the correct Release value even when the installer runs as a 32-bit process. -->
       <RegistrySearch Id="NetFramework48Release"
                       Root="HKLM"
                       Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
                       Name="Release"
-                      Type="raw" />
+                      Type="raw"
+                      Win64="yes" />
     </Property>
 
     <Condition Message=".NET Framework 4.8 or later is required.">

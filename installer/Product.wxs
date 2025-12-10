@@ -7,12 +7,20 @@
     - Run heat.exe in CI to generate installer\harvest.wxs from your project's bin\Release\net48 output.
     - Keep a stable UpgradeCode between releases.
   -->
-  <Product Id="*" Name="LightsOutCube" Language="1033" Version="1.0.0.0"
+  <Product Id="*" Name="Lights Out Cube" Language="1033" Version="1.0.0.0"
            Manufacturer="Gareth Richards" UpgradeCode="d2f7b0a4-6c6f-4f2d-9b1a-5b8b2f9d3c3f">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Description="Lights Out Cube installer" />
 
     <!-- Add this Media element to satisfy harvested file references -->
     <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+    <!-- Installer icon (displayed in Add/Remove Programs). Place an 'appIcon.ico' file in installer/ if used. -->
+    <Icon Id="appIcon.ico" SourceFile="installer\appIcon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="appIcon.ico" />
+
+    <!-- Store links/metadata shown in Programs and Features -->
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/GarethRichards/LightsOutCubeApp" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/GarethRichards/LightsOutCubeApp/releases" />
 
     <!-- Target folder (ProgramFilesFolder\LightsOutCube) -->
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -67,10 +75,9 @@
     <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 
     <!-- .NET Framework 4.8 detection via registry; Release >= 528040 indicates 4.8 -->
-    <Property Id="NETFRAMEWORK48">
-      <!-- Perform the registry search against the 64-bit registry hive so 64-bit systems (Windows 11)
-           report the correct Release value even when the installer runs as a 32-bit process. -->
-      <RegistrySearch Id="NetFramework48Release"
+    <!-- Search both the 64-bit and 32-bit registry hives to be robust regardless of process bitness. -->
+    <Property Id="NETFRAMEWORK48_64">
+      <RegistrySearch Id="NetFramework48Release64"
                       Root="HKLM"
                       Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
                       Name="Release"
@@ -78,8 +85,17 @@
                       Win64="yes" />
     </Property>
 
+    <Property Id="NETFRAMEWORK48_32">
+      <RegistrySearch Id="NetFramework48Release32"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+                      Name="Release"
+                      Type="raw"
+                      Win64="no" />
+    </Property>
+
     <Condition Message=".NET Framework 4.8 or later is required.">
-      <![CDATA[Installed OR (NETFRAMEWORK48 AND NETFRAMEWORK48 >= "528040")]]>
+      <![CDATA[Installed OR ((NETFRAMEWORK48_64 AND NETFRAMEWORK48_64 >= "528040") OR (NETFRAMEWORK48_32 AND NETFRAMEWORK48_32 >= "528040"))]]>
     </Condition>
 
     <!-- Metadata for Add/Remove Programs -->

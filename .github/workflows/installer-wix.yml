@@ -60,7 +60,8 @@ jobs:
 
           # generate harvest.wxs from the exact output folder
           # use -var to make Source paths use a preprocessor variable we can define when compiling
-          & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -gg -cg AppFiles -dr INSTALLFOLDER -var var.SourceDir -out "installer\harvest.wxs"
+          # use -srd to suppress the harvested root directory so files are placed directly into INSTALLFOLDER
+          & "$env:WIX\bin\heat.exe" dir $appOut -ag -scom -sreg -sfrag -srd -gg -cg AppFiles -dr INSTALLFOLDER -var var.SourceDir -out "installer\harvest.wxs"
 
           # ensure object folder for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null

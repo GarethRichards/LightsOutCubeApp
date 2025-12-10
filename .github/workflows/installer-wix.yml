@@ -65,13 +65,26 @@ jobs:
           # ensure object folder for wixobj files
           New-Item -ItemType Directory -Force -Path installer\obj | Out-Null
 
+          # path to NetFx extension DLL
+          $netfxExt = Join-Path $env:WIX "bin\WixNetFxExtension.dll"
+          if (-not (Test-Path $netfxExt)) {
+            Write-Error "WixNetFxExtension.dll not found at $netfxExt"
+            exit 1
+          }
+
           # compile both Product.wxs and generated harvest.wxs into installer\obj\
           # compile with SourceDir preprocessor define so harvested Source paths resolve
-          $netfxExt = Join-Path $env:WIX "bin\WixNetFxExtension.dll"
-          & "$env:WIX\bin\candle.exe" -ext WixNetFxExtension -ext $netfxExt -dSourceDir="$appOut" installer\Product.wxs installer\harvest.wxs -out installer\obj\
+          & "$env:WIX\bin\candle.exe" -ext $netfxExt -dSourceDir="$appOut" installer\Product.wxs installer\harvest.wxs -out installer\obj\
 
-          # link wixobj files into an MSI
-          & "$env:WIX\bin\light.exe" -ext WixNetFxExtension -ext $netfxExt installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
+          # list produced wixobj files for debugging and verify Product.wixobj exists
+          Get-ChildItem -Path installer\obj -Filter *.wixobj | ForEach-Object { Write-Host "Produced: $($_.FullName)" }
+          if (-not (Test-Path installer\obj\Product.wixobj)) {
+            Write-Error "Product.wixobj missing after candle"
+            exit 1
+          }
+
+          # link wixobj files into an MSI using the same explicit extension DLL (only load once)
+          & "$env:WIX\bin\light.exe" -ext $netfxExt installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI
         uses: actions/upload-artifact@v4

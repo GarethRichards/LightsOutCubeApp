@@ -67,10 +67,10 @@ jobs:
 
           # compile both Product.wxs and generated harvest.wxs into installer\obj\
           # compile with SourceDir preprocessor define so harvested Source paths resolve
-          & "$env:WIX\bin\candle.exe" -dSourceDir="$appOut" installer\Product.wxs installer\harvest.wxs -out installer\obj\
+          & "$env:WIX\bin\candle.exe" -ext WixNetFxExtension -dSourceDir="$appOut" installer\Product.wxs installer\harvest.wxs -out installer\obj\
 
           # link wixobj files into an MSI
-          & "$env:WIX\bin\light.exe" installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
+          & "$env:WIX\bin\light.exe" -ext WixNetFxExtension installer\obj\Product.wixobj installer\obj\harvest.wixobj -out installer\LightsOutCube.msi
 
       - name: Upload MSI
         uses: actions/upload-artifact@v4

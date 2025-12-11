@@ -1,0 +1,37 @@
+name: SonarCloud Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # If you need to set up Node/Maven/.NET/etc, add steps here
+      # Example for Node.js:
+      #- name: Setup Node
+      #  uses: actions/setup-node@v4
+      #  with:
+      #    node-version: '18'
+      #- name: Install dependencies
+      #  run: npm ci
+      #- name: Build
+      #  run: npm run build
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          # your SonarCloud organization key (the short org id)
+          organization: "GarethRichards"
+          # your SonarCloud project key (from SonarCloud); example in your link:
+          projectKey: "GarethRichards_LightsOutCubeApp"
+        env:
+          # secret you added in repo Settings -> Secrets and variables -> Actions
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

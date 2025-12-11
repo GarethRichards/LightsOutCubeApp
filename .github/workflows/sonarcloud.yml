@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+            fetch-depth: 0  # Shallow clones should be disabled for better analysis
 
       # If you need to set up Node/Maven/.NET/etc, add steps here
       # Example for Node.js:
@@ -26,12 +28,12 @@ jobs:
       #  run: npm run build
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2
-        with:
-          # your SonarCloud organization key (the short org id)
-          organization: "GarethRichards"
-          # your SonarCloud project key (from SonarCloud); example in your link:
-          projectKey: "GarethRichards_LightsOutCubeApp"
+        uses: sonarsource/sonarcloud-github-action@v3
+
         env:
           # secret you added in repo Settings -> Secrets and variables -> Actions
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=GarethRichards
+            -Dsonar.projectKey=GarethRichards_LightsOutCubeApp

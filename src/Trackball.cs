@@ -36,8 +36,8 @@ namespace _3DTools
         private Point _previousPosition2D;
         private Vector3D _previousPosition3D = new Vector3D(0, 0, 1);
 
-        private ScaleTransform3D _scale = new ScaleTransform3D();
-        private AxisAngleRotation3D _rotation = new AxisAngleRotation3D();
+        private readonly ScaleTransform3D _scale = new ScaleTransform3D();
+        private readonly AxisAngleRotation3D _rotation = new AxisAngleRotation3D();
 
         // tracking state to avoid using stale positions if capture is lost
         private bool _isTracking = false;
@@ -140,7 +140,7 @@ namespace _3DTools
                         _previousPosition3D = ProjectToTrackball(_eventSource.ActualWidth, _eventSource.ActualHeight, p);
                     }
                 }
-                catch { }
+                catch { /* Ignore */ }
             }
         }
 
@@ -192,7 +192,7 @@ namespace _3DTools
             double angle = Vector3D.AngleBetween(_previousPosition3D, currentPosition3D);
 
             // Defensive guards: ignore tiny/invalid deltas and extremely large jumps
-            if (double.IsNaN(angle) || angle == 0.0)
+            if (double.IsNaN(angle) || Math.Abs(angle) < 0.000001)
                 return;
 
             // If axis is degenerate, ignore this frame
@@ -239,7 +239,7 @@ namespace _3DTools
             _previousPosition3D = currentPosition3D;
         }
 
-        private Vector3D ProjectToTrackball(double width, double height, Point point)
+        private static Vector3D ProjectToTrackball(double width, double height, Point point)
         {
             // Use the smaller viewport dimension so the virtual trackball stays circular
             double minDim = Math.Min(width, height);

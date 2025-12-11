@@ -23,7 +23,7 @@ namespace LightsOutCube.Model
         }
 
         // --- per-puzzle best scores (existing) ---
-        public IList<ScoreRecord> LoadAll()
+        public static IList<ScoreRecord> LoadAll()
         {
             lock (Sync)
             {
@@ -56,7 +56,7 @@ namespace LightsOutCube.Model
             }
         }
 
-        public void Clear()
+        public static void Clear()
         {
             lock (Sync)
             {
@@ -65,7 +65,7 @@ namespace LightsOutCube.Model
             }
         }
 
-        private void SaveList(IList<ScoreRecord> list)
+        private static void SaveList(IList<ScoreRecord> list)
         {
             lock (Sync)
             {
@@ -80,7 +80,7 @@ namespace LightsOutCube.Model
         /// <summary>
         /// Returns the best (fastest) record for the given puzzle id, or null when none exists.
         /// </summary>
-        public ScoreRecord GetBestRecord(string puzzleId)
+        public static ScoreRecord GetBestRecord(string puzzleId)
         {
             if (string.IsNullOrEmpty(puzzleId)) return null;
             var list = LoadAll();
@@ -94,7 +94,7 @@ namespace LightsOutCube.Model
         /// Adds the record only if it is the first record for the puzzle or faster than the existing best.
         /// Returns true when the store was updated (insert or replace), false when the new record was not better.
         /// </summary>
-        public bool AddIfBest(ScoreRecord record)
+        public static bool AddIfBest(ScoreRecord record)
         {
             if (record == null) return false;
             if (string.IsNullOrEmpty(record.PuzzleId))
@@ -132,7 +132,7 @@ namespace LightsOutCube.Model
         /// Saves the last completed speed run summary by adding it to the persisted list of runs.
         /// Appends the new run to the end of the list (oldest -> newest).
         /// </summary>
-        public void SaveLastSpeedRun(SpeedRunSummary summary)
+        public static void SaveLastSpeedRun(SpeedRunSummary summary)
         {
             if (summary == null) return;
 
@@ -197,7 +197,7 @@ namespace LightsOutCube.Model
         /// <summary>
         /// Loads the last saved speed run summary (newest run), or null if none available or on error.
         /// </summary>
-        public SpeedRunSummary LoadLastSpeedRun()
+        public static SpeedRunSummary LoadLastSpeedRun()
         {
             lock (Sync)
             {
@@ -240,7 +240,7 @@ namespace LightsOutCube.Model
         /// <summary>
         /// Delete persisted speed run stats (for example on Clear).
         /// </summary>
-        public void ClearLastSpeedRun()
+        public static void ClearLastSpeedRun()
         {
             lock (Sync)
             {
@@ -253,7 +253,7 @@ namespace LightsOutCube.Model
         /// Loads all persisted speed runs (oldest -> newest). Returns empty list when none or on error.
         /// Supports both the newer ScoreStats container and the older single SpeedRunSummary format.
         /// </summary>
-        public IList<SpeedRunSummary> LoadAllSpeedRuns()
+        public static IList<SpeedRunSummary> LoadAllSpeedRuns()
         {
             lock (Sync)
             {

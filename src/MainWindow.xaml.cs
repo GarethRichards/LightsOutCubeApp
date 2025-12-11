@@ -484,7 +484,7 @@ namespace LightsOutCube
                             // ViewModel.SolutionMask contains the solution mask; stop flashing if bit set.
                             try
                             {
-                                if ((_viewModel?.SolutionMask ?? 0L & (1L << iButton)) != 0)
+                                if ((_viewModel.SolutionMask & (1L << iButton)) != 0)
                                 {
                                     StopFlashForModel(iButton);
                                 }

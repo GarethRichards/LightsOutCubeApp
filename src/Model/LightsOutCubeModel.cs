@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LightsOutCube
+namespace LightsOutCube.Model
 {
     class LightsOutCubeModel
     {
-//        public long CubeMode;
         public const int LEFT = 0;
         public const int RIGHT = 2;
         public const int UP = 1;
@@ -68,7 +67,6 @@ namespace LightsOutCube
                 aTog5.Add(0);
                 m = m * 2;
             }
-            m = 2;
 
             for (int i = 1; i < 60; i++)
             {

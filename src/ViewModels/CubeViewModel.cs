@@ -1,11 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LightsOutCube;
 using LightsOutCube.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -228,6 +226,36 @@ namespace LightsOutCube.ViewModels
             OnPropertyChanged(nameof(SolvedBannerAdditional));
         }
 
+        private void CubePuzzleSolved()
+        {
+            _wasSolved = true;
+            var rec = OnPuzzleSolved(); // creates and persists per-puzzle record
+                                        // if we are in speed-run mode collect the per-puzzle record and continue/finish run
+            if (IsSpeedRunMode)
+            {
+                if (rec != null)
+                    _speedRunRecords.Add(rec);
+
+                SpeedRunSolvedCount++;
+
+                // advance to next puzzle if available, otherwise end speed run
+                int maxPuzzle = PuzzleList.Where(x => x != SpeedRunPuzzleId).DefaultIfEmpty(1).Max();
+                if (_selectedPuzzle < maxPuzzle)
+                {
+                    // move to next puzzle and continue the run
+                    // set backing field directly to avoid re-triggering StartSpeedRun
+                    _selectedPuzzle = _selectedPuzzle + 1;
+                    OnPropertyChanged(nameof(SelectedPuzzle));
+                    SetPuzzle(_selectedPuzzle);
+                }
+                else
+                {
+                    EndSpeedRun();
+                }
+            }
+
+        }
+
         // Called by the View when model changes or a toggle occurs
         public void SetCube()
         {
@@ -260,31 +288,7 @@ namespace LightsOutCube.ViewModels
                 // call solved handling only once when the puzzle becomes solved
                 if (!previouslySolved)
                 {
-                    _wasSolved = true;
-                    var rec = OnPuzzleSolved(); // creates and persists per-puzzle record
-                    // if we are in speed-run mode collect the per-puzzle record and continue/finish run
-                    if (IsSpeedRunMode)
-                    {
-                        if (rec != null)
-                            _speedRunRecords.Add(rec);
-
-                        SpeedRunSolvedCount++;
-
-                        // advance to next puzzle if available, otherwise end speed run
-                        int maxPuzzle = PuzzleList.Where(x => x != SpeedRunPuzzleId).DefaultIfEmpty(1).Max();
-                        if (_selectedPuzzle < maxPuzzle)
-                        {
-                            // move to next puzzle and continue the run
-                            // set backing field directly to avoid re-triggering StartSpeedRun
-                            _selectedPuzzle = _selectedPuzzle + 1;
-                            OnPropertyChanged(nameof(SelectedPuzzle));
-                            SetPuzzle(_selectedPuzzle);
-                        }
-                        else
-                        {
-                            EndSpeedRun();
-                        }
-                    }
+                    CubePuzzleSolved();
                 }
             }
             else
@@ -410,7 +414,7 @@ namespace LightsOutCube.ViewModels
                     var summary = new SpeedRunSummary
                     {
                         Timestamp = DateTimeOffset.UtcNow,
-                        LastPuzzleSolved = _speedRunRecords.Last().PuzzleId,
+                        LastPuzzleSolved = _speedRunRecords[_speedRunRecords.Count-1].PuzzleId,
                         TimesMs = _speedRunRecords.Select(r => (long)r.Duration.TotalMilliseconds).ToList(),
                         PressCounts = _speedRunRecords.Select(r => r.PressCount).ToList(),
                         IsPerfect = _speedRunRecords.Select(r => r.IsPerfect).ToList(),

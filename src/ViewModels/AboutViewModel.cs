@@ -80,9 +80,12 @@ namespace LightsOutCube.ViewModels
             }
         }
 
-        private string FormatDuration(TimeSpan ts)
+        private static string FormatDuration(TimeSpan ts)
         {
-            return $"{ts.TotalSeconds:0.###}s";
+            // Format as minutes:seconds (e.g. 2:05)
+            var minutes = (int)ts.TotalMinutes;
+            var seconds = ts.Seconds;
+            return $"{minutes}:{seconds:D2}";
         }
     }
 

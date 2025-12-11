@@ -35,5 +35,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=GarethRichards
+            -Dsonar.organization=garethrichards
             -Dsonar.projectKey=GarethRichards_LightsOutCubeApp

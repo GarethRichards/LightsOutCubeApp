@@ -46,7 +46,7 @@ namespace LightsOutCube.Model
             }
         }
 
-        public void Add(ScoreRecord record)
+        public static void Add(ScoreRecord record)
         {
             lock (Sync)
             {

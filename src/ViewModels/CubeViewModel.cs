@@ -422,7 +422,7 @@ namespace LightsOutCube.ViewModels
                         SolvedCount = _speedRunRecords.Count
                     };
 
-                    _scoreStore.SaveLastSpeedRun(summary);
+                    ScoreStore.SaveLastSpeedRun(summary);
                 }
             }
             catch
@@ -585,7 +585,7 @@ namespace LightsOutCube.ViewModels
                 };
 
                 // Persist only if this is the first record for the puzzle or faster than the stored best
-                _scoreStore.AddIfBest(record);
+                ScoreStore.AddIfBest(record);
 
                 return record;
             }

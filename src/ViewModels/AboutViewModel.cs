@@ -16,7 +16,7 @@ namespace LightsOutCube.ViewModels
         {
             SpeedRuns.Clear();
 
-            var runs = _scoreStore.LoadAllSpeedRuns() ?? Enumerable.Empty<SpeedRunSummary>();
+            var runs = ScoreStore.LoadAllSpeedRuns() ?? Enumerable.Empty<SpeedRunSummary>();
             foreach (var run in runs.OrderByDescending(r => r.Timestamp))
             {
                 var times = run.TimesMs?.ToList() ?? new System.Collections.Generic.List<long>();
@@ -66,7 +66,7 @@ namespace LightsOutCube.ViewModels
         {
             HighScores.Clear();
 
-            var records = _scoreStore.LoadAll() ?? Enumerable.Empty<ScoreRecord>();
+            var records = ScoreStore.LoadAll() ?? Enumerable.Empty<ScoreRecord>();
             foreach (var rec in records.OrderByDescending(r => r.Timestamp))
             {
                 HighScores.Add(new HighScoreEntry

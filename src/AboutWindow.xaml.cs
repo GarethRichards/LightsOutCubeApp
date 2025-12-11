@@ -19,14 +19,8 @@ namespace LightsOutCube
             DataContext = _vm;
         }
 
-        private void LoadSpeedRuns()
-        {
-            // Refresh the view-model and bind to the TreeView
-            _vm.Refresh();
-        }
-
         // Placeholder for the formatting helper used elsewhere in the class
-        private string FormatDuration(TimeSpan ts)
+        private static string FormatDuration(TimeSpan ts)
         {
             return $"{ts.TotalSeconds:0.###}s";
         }
@@ -40,7 +34,7 @@ namespace LightsOutCube
                 _vm.Refresh();
                 _vm.RefreshHighScores();
             }
-            catch { }
+            catch { /* Ignore error */ }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

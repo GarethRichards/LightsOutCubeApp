@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq; // added for resource key discovery
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -16,16 +17,16 @@ namespace LightsOutCube
 {
     public partial class MainWindow : Window
     {
-        private double _cubeScale = 0.14;
-        private CubeViewModel _viewModel;
-        private Dictionary<GeometryModel3D, int> _cubes = new Dictionary<GeometryModel3D, int>();
-        private Dictionary<int, GeometryModel3D> _cubesByIndex = new Dictionary<int, GeometryModel3D>();
+        readonly private double _cubeScale = 0.14;
+        readonly private CubeViewModel _viewModel;
+        readonly private Dictionary<GeometryModel3D, int> _cubes = new Dictionary<GeometryModel3D, int>();
+        readonly private Dictionary<int, GeometryModel3D> _cubesByIndex = new Dictionary<int, GeometryModel3D>();
         // map index -> translate transform for animation
-        private readonly Dictionary<int, TranslateTransform3D> cubeTranslateByIndex = new Dictionary<int, TranslateTransform3D>();
+        readonly private Dictionary<int, TranslateTransform3D> cubeTranslateByIndex = new Dictionary<int, TranslateTransform3D>();
 
-        private int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+        readonly private int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
 
-        private Trackball _trackball;
+        private Trackball _trackball = null;
 
         private Material _yellowMaterial;
         private Material _defaultMaterial;
@@ -132,36 +133,35 @@ namespace LightsOutCube
         }
         void InitializeCellVisuals()
         {
-
             // Map VM cells to visuals: subscribe to property changes and set materials in the View (UI)
-            if (_viewModel.CellsByIndex != null)
+            if (_viewModel.CellsByIndex == null)
+                return;
+
+            foreach (var kvp in _cubesByIndex)
             {
-                foreach (var kvp in _cubesByIndex)
+                int index = kvp.Key;
+                var model3D = kvp.Value;
+
+                if (!_viewModel.CellsByIndex.TryGetValue(index, out var cell))
+                    continue;
+
+                // apply initial state
+                model3D.Material = cell.IsOn
+                    ? _yellowMaterial
+                    : _defaultMaterial;
+
+                // subscribe to changes and update material on UI thread
+                PropertyChangedEventHandler handler = (s, e) =>
                 {
-                    int index = kvp.Key;
-                    var model3D = kvp.Value;
-
-                    if (!_viewModel.CellsByIndex.TryGetValue(index, out var cell))
-                        continue;
-
-                    // apply initial state
-                    model3D.Material = cell.IsOn
-                        ? _yellowMaterial
-                        : _defaultMaterial;
-
-                    // subscribe to changes and update material on UI thread
-                    PropertyChangedEventHandler handler = (s, e) =>
+                    if (e.PropertyName != nameof(cell.IsOn)) return;
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        if (e.PropertyName != nameof(cell.IsOn)) return;
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            model3D.Material = cell.IsOn ? _yellowMaterial : _defaultMaterial;
-                        });
-                    };
+                        model3D.Material = cell.IsOn ? _yellowMaterial : _defaultMaterial;
+                    });
+                };
 
-                    cell.PropertyChanged += handler;
-                    _cellHandlers[index] = handler;
-                }
+                cell.PropertyChanged += handler;
+                _cellHandlers[index] = handler;
             }
         }
         
@@ -235,7 +235,7 @@ namespace LightsOutCube
                 System.Diagnostics.Debug.WriteLine($"ShowSolutionButton_Click error: {ex}");
             }
         }
-
+        const string OPACITY = "Opacity";
         private void ShowStartupSplash()
         {
             try
@@ -255,11 +255,11 @@ namespace LightsOutCube
                 sb.Children.Add(fadeOut);
 
                 Storyboard.SetTarget(fadeIn, StartupSplash);
-                Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OPACITY, null));
                 Storyboard.SetTarget(hold, StartupSplash);
-                Storyboard.SetTargetProperty(hold, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(hold, new PropertyPath(OPACITY, null));
                 Storyboard.SetTarget(fadeOut, StartupSplash);
-                Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(fadeOut, new PropertyPath(OPACITY, null));
 
                 sb.Completed += (s, e) =>
                 {
@@ -276,7 +276,7 @@ namespace LightsOutCube
                     StartupSplash.Visibility = Visibility.Collapsed;
                     StartupSplash.IsHitTestVisible = false;
                 }
-                catch { }
+                catch { /* Ignore animation errors */ }
             }
         }
 
@@ -301,11 +301,11 @@ namespace LightsOutCube
                 sb.Children.Add(stay);
                 sb.Children.Add(fadeOut);
                 Storyboard.SetTarget(fadeIn, SolvedBanner);
-                Storyboard.SetTargetProperty(fadeIn, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(fadeIn, new PropertyPath(OPACITY, null));
                 Storyboard.SetTarget(stay, SolvedBanner);
-                Storyboard.SetTargetProperty(stay, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(stay, new PropertyPath(OPACITY, null));
                 Storyboard.SetTarget(fadeOut, SolvedBanner);
-                Storyboard.SetTargetProperty(fadeOut, new PropertyPath("Opacity"));
+                Storyboard.SetTargetProperty(fadeOut, new PropertyPath(OPACITY, null));
 
                 // Completed now advances to the next puzzle so the new puzzle appears without requiring a click
                 sb.Completed += (s, e) =>
@@ -358,7 +358,7 @@ namespace LightsOutCube
                     {
                         myTransformGroup.Children.Remove(rTransform);
                     }
-                    catch { }
+                    catch { /* Ignore errors */ }
                 };
 
                 rotation.BeginAnimation(AxisAngleRotation3D.AngleProperty, angleAnim);
@@ -409,16 +409,20 @@ namespace LightsOutCube
             // removed click-driven puzzle advance — puzzle now advances automatically after the solved celebration
         }
 
+        private void StopSolutionTimer(int index)
+        {
+            if (_solutionTimers.TryGetValue(index, out var timer))
+            {
+                try { timer.Stop(); } catch { /* Ignore errors */ }
+                _solutionTimers.Remove(index);
+            }
+        }
         // Stop flashing for a single solution index and restore the appropriate material.
         private void StopFlashForModel(int index)
         {
             try
             {
-                if (_solutionTimers.TryGetValue(index, out var timer))
-                {
-                    try { timer.Stop(); } catch { }
-                    _solutionTimers.Remove(index);
-                }
+                StopSolutionTimer(index);
 
                 // Determine final material based on current logical state (on->yellow, off->default)
                 Material final = _defaultMaterial;
@@ -441,15 +445,11 @@ namespace LightsOutCube
                 // best-effort cleanup
                 try
                 {
-                    if (_solutionTimers.TryGetValue(index, out var t2))
-                    {
-                        t2.Stop();
-                        _solutionTimers.Remove(index);
-                    }
+                    StopSolutionTimer(index);
                     if (_originalMaterials.ContainsKey(index))
                         _originalMaterials.Remove(index);
                 }
-                catch { }
+                catch { /* Ignore errors */ }
             }
         }
 
@@ -558,13 +558,13 @@ namespace LightsOutCube
             if (onCompleted != null)
             {
                 var totalMs = (durMs * 2) + 20; // AutoReverse doubles duration, add tiny margin
-                var timer = new System.Windows.Threading.DispatcherTimer(
+                var timer = new DispatcherTimer(
                     TimeSpan.FromMilliseconds(totalMs),
-                    System.Windows.Threading.DispatcherPriority.Background,
+                    DispatcherPriority.Background,
                     (s, e) =>
                     {
                         try { onCompleted(); } catch { /* best-effort */ }
-                        ((System.Windows.Threading.DispatcherTimer)s).Stop();
+                        ((DispatcherTimer)s).Stop();
                     },
                     Application.Current.Dispatcher);
                 timer.Start();
@@ -608,7 +608,7 @@ namespace LightsOutCube
 
         private void StartupPlayer_MediaOpened(object sender, EventArgs e)
         {
-            try { _startupPlayer?.Play(); } catch { }
+            try { _startupPlayer?.Play(); } catch { /* Ignore error */ }
         }
 
         private void StartupPlayer_MediaEnded(object sender, EventArgs e)
@@ -636,7 +636,7 @@ namespace LightsOutCube
                     _startupPlayer.Stop();
                     _startupPlayer.Close();
                 }
-                catch { }
+                catch { /* Ignore error */ }
                 finally
                 {
                     _startupPlayer = null;
@@ -727,7 +727,7 @@ namespace LightsOutCube
             // Ensure existing timer for this index is stopped
             if (_solutionTimers.TryGetValue(index, out var existing))
             {
-                try { existing.Stop(); } catch { }
+                try { existing.Stop(); } catch { /* Ignore error */ }
                 _solutionTimers.Remove(index);
             }
 
@@ -749,7 +749,7 @@ namespace LightsOutCube
                 }
                 catch
                 {
-                    try { ((DispatcherTimer)s).Stop(); } catch { }
+                    try { ((DispatcherTimer)s).Stop(); } catch { /* Ignore error */ }
                     // restore safe fallback
                     model3D.Material = _originalMaterials.ContainsKey(index) ? _originalMaterials[index] : _defaultMaterial;
                     _solutionTimers.Remove(index);
@@ -765,7 +765,7 @@ namespace LightsOutCube
         {
             foreach (var kvp in _solutionTimers)
             {
-                try { kvp.Value.Stop(); } catch { }
+                StopSolutionTimer(kvp.Key);
             }
             _solutionTimers.Clear();
 
@@ -777,7 +777,7 @@ namespace LightsOutCube
                     if (_cubesByIndex.TryGetValue(kvp.Key, out var model3D))
                         model3D.Material = kvp.Value;
                 }
-                catch { }
+                catch { /* Ignore errors */ }
             }
             _originalMaterials.Clear();
         }
@@ -808,7 +808,7 @@ namespace LightsOutCube
                     _startupPlayer = null;
                 }
             }
-            catch { }
+            catch { /* Ignore errors */ }
         }
     }
 }

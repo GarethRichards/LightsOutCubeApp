@@ -7,9 +7,6 @@ namespace LightsOutCube.Model
 {
     internal class PuzzleModel
     {
-
-        readonly LightsOutCubeModel model = new LightsOutCubeModel();
-
         readonly XmlDocument puzzles = new XmlDocument();
         public XmlDocument Puzzles => puzzles;
 

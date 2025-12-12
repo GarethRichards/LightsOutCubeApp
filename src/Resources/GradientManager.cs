@@ -43,14 +43,13 @@ namespace LightsOutCube.Resources
                 return;
 
             // Ensure we operate on a mutable clone
-            var target = (LinearGradientBrush)targetBrush.Clone();
+            var target = targetBrush.Clone();
             target.Freeze(); // safe to keep frozen; we only read colors from it
 
-            var current = host.Background as LinearGradientBrush;
-            if (current == null)
+            if (!(host.Background is LinearGradientBrush current))
             {
                 // No existing gradient — set target immediately (or set a clone so future animations can run)
-                host.Background = (LinearGradientBrush)targetBrush.Clone();
+                host.Background = targetBrush.Clone();
                 return;
             }
 
@@ -71,7 +70,7 @@ namespace LightsOutCube.Resources
             // If target has additional stops, append them and animate from last color
             if (target.GradientStops.Count > current.GradientStops.Count)
             {
-                var lastColor = current.GradientStops.Last().Color;
+                var lastColor = current.GradientStops[current.GradientStops.Count - 1].Color;
                 for (int i = min; i < target.GradientStops.Count; i++)
                 {
                     var gs = new GradientStop(lastColor, target.GradientStops[i].Offset);
@@ -83,7 +82,7 @@ namespace LightsOutCube.Resources
             // If current has extra stops, animate them to the last target color
             else if (current.GradientStops.Count > target.GradientStops.Count)
             {
-                var finalColor = target.GradientStops.Last().Color;
+                var finalColor = target.GradientStops[current.GradientStops.Count - 1].Color;
                 for (int i = min; i < current.GradientStops.Count; i++)
                 {
                     var anim = new ColorAnimation(finalColor, duration) { EasingFunction = easing };

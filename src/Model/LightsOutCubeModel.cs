@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LightsOutCube.Model
 {
-    class LightsOutCubeModel
+    static class LightsOutCubeModel
     {
         public const int LEFT = 0;
         public const int RIGHT = 2;
@@ -14,9 +14,10 @@ namespace LightsOutCube.Model
         static List<List<int>> Offsets = new List<List<int>>();
         static List<long> aTog1 = new List<long>();
         static List<long> aTog5 = new List<long>();
-
-        public LightsOutCubeModel()
+        static bool initialized = false;
+        private static void Init()
         {
+            if (initialized) return;
             int[] i0 = { 0, 0, 0, 0 };
             Offsets.Add(new List<int>(i0));
             int[] i1 = { 52, 48, 1, 3 };
@@ -79,8 +80,12 @@ namespace LightsOutCube.Model
                     TogButton(i, Adjacent(i, RIGHT));
                 }
             }
+            initialized = true;
         }
-
+        private static void TogButton(int index, int but)
+        {
+            aTog5[index] |= aTog1[but];
+        }
         public static int Adjacent(int i, int j)
         {
             return (i + Offsets[i % 20][j]) % 60;
@@ -88,18 +93,17 @@ namespace LightsOutCube.Model
 
         public static void Tog1(int index,ref long loc)
         {
+            Init();
             loc ^= aTog1[index];
         }
 
         public static void Tog5(int index,ref long loc)
         {
+            Init();
             loc ^= aTog5[index];
         }
 
-        public static void TogButton(int index, int but)
-        {
-            aTog5[index] |= aTog1[but];
-        }
+
 
     }
 }

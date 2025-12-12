@@ -763,9 +763,9 @@ namespace LightsOutCube
 
         private void CancelSolutionDisplay()
         {
-            foreach (var kvp in _solutionTimers)
+            while (_solutionTimers.Count!=0)
             {
-                StopSolutionTimer(kvp.Key);
+                StopSolutionTimer(_solutionTimers.First().Key);
             }
             _solutionTimers.Clear();
 

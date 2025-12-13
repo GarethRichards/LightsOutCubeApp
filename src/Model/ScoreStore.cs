@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace LightsOutCube.Model
 {
-    public class ScoreStore
+    public static class ScoreStore
     {
         private static readonly string DirectoryPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LightsOutCube");

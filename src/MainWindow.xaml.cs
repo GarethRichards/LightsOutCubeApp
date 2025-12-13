@@ -28,7 +28,7 @@ namespace LightsOutCube
 
         private Trackball _trackball;
 
-        private Material _yellowMaterial;
+        private Material _litMaterial;
         private Material _offTransparentMaterial;
 
         // store handlers so we can unsubscribe on unload
@@ -122,7 +122,7 @@ namespace LightsOutCube
             };
             // Initialize lit material from ViewModel selection (fallback to yellow)
             var initialBrush = _viewModel?.SelectedLitBrush ?? new SolidColorBrush(Colors.Yellow);
-            _yellowMaterial = new DiffuseMaterial(initialBrush);
+            _litMaterial = new DiffuseMaterial(initialBrush);
             _offTransparentMaterial = (Material)System.Windows.Application.Current.Resources["TransparentMaterial"];
 
             // solution material (distinct, can tweak color)
@@ -153,10 +153,10 @@ namespace LightsOutCube
         {
             try
             {
-                var old = _yellowMaterial;
+                var old = _litMaterial;
                 var brush = _viewModel?.SelectedLitBrush ?? new SolidColorBrush(Colors.Yellow);
                 var newMat = new DiffuseMaterial(brush);
-                _yellowMaterial = newMat;
+                _litMaterial = newMat;
 
                 // Update any currently lit cells to the new material
                 if (_viewModel?.CellsByIndex != null)
@@ -167,7 +167,7 @@ namespace LightsOutCube
                         var model3D = kvp.Value;
                         if (_viewModel.CellsByIndex.TryGetValue(idx, out var cell) && cell.IsOn)
                         {
-                            try { model3D.Material = _yellowMaterial; } catch { }
+                            model3D.Material = _litMaterial;
                         }
                     }
                 }
@@ -176,7 +176,7 @@ namespace LightsOutCube
                 var keys = _originalMaterials.Where(kv => ReferenceEquals(kv.Value, old)).Select(kv => kv.Key).ToList();
                 foreach (var k in keys)
                 {
-                    _originalMaterials[k] = _yellowMaterial;
+                    _originalMaterials[k] = _litMaterial;
                 }
             }
             catch (Exception ex)
@@ -200,7 +200,7 @@ namespace LightsOutCube
 
                 // apply initial state
                 model3D.Material = cell.IsOn
-                    ? _yellowMaterial
+                    ? _litMaterial
                     : _offTransparentMaterial;
 
                 // subscribe to changes and update material on UI thread
@@ -209,7 +209,7 @@ namespace LightsOutCube
                     if (e.PropertyName != nameof(cell.IsOn)) return;
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        model3D.Material = cell.IsOn ? _yellowMaterial : _offTransparentMaterial;
+                        model3D.Material = cell.IsOn ? _litMaterial : _offTransparentMaterial;
                     });
                 };
 
@@ -484,7 +484,7 @@ namespace LightsOutCube
                 Material final = _offTransparentMaterial;
                 if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
                 {
-                    final = cell.IsOn ? _yellowMaterial : _offTransparentMaterial;
+                    final = cell.IsOn ? _litMaterial : _offTransparentMaterial;
                 }
 
                 if (_cubesByIndex.TryGetValue(index, out var model3D))

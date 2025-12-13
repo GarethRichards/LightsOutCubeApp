@@ -142,25 +142,23 @@ Positions="-0.5,-0.5,-0.5
             </DiffuseMaterial>
         </MaterialGroup>
 
-        <MaterialGroup x:Key="myFunkyMaterial">
-            <!--     <DiffuseMaterial>
-          <DiffuseMaterial.Brush>
-           
-            The Opacity property of this LinearGradient is animated. See Storyboard below.
-            <LinearGradientBrush x:Name="myGradientBrush"  StartPoint="0,0.5" EndPoint="1,0.5">
-              <LinearGradientBrush.GradientStops>
-                <GradientStop Color="Yellow" Offset="0" />
-                <GradientStop Color="Red" Offset="0.25" />
-                <GradientStop Color="Blue" Offset="0.75" />
-                <GradientStop Color="LimeGreen" Offset="1" />
-              </LinearGradientBrush.GradientStops>
-            </LinearGradientBrush>
-          </DiffuseMaterial.Brush>       </DiffuseMaterial> -->
+        <MaterialGroup x:Key="TransparentMaterial">
         </MaterialGroup>
         <ResourceDictionary x:Key="MergedGradients">
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Gradients.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
+        <Style x:Key="RoundedButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="12" BorderBrush="White"  BorderThickness="1" Padding="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

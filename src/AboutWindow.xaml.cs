@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Diagnostics;
+using System.Windows.Navigation;
 using LightsOutCube.Model;
 using LightsOutCube.ViewModels;
 
@@ -17,12 +19,6 @@ namespace LightsOutCube
             InitializeComponent();
             _vm = new AboutViewModel();
             DataContext = _vm;
-        }
-
-        // Placeholder for the formatting helper used elsewhere in the class
-        private static string FormatDuration(TimeSpan ts)
-        {
-            return $"{ts.TotalSeconds:0.###}s";
         }
 
         // Other existing event handlers should remain unchanged (e.g. Window_Loaded, CloseButton_Click, RefreshSpeedRunsButton_Click)
@@ -40,6 +36,17 @@ namespace LightsOutCube
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true };
+                Process.Start(psi);
+            }
+            catch { /* best-effort */ }
+            e.Handled = true;
         }
 
         // RefreshScoresButton removed - high scores are bound to ViewModel

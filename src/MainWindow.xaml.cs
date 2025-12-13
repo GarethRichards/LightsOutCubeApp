@@ -26,10 +26,10 @@ namespace LightsOutCube
 
         readonly private int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
 
-        private Trackball _trackball = null;
+        private Trackball _trackball;
 
         private Material _yellowMaterial;
-        private Material _defaultMaterial;
+        private Material _offTransparentMaterial;
 
         // store handlers so we can unsubscribe on unload
         private readonly Dictionary<int, PropertyChangedEventHandler> _cellHandlers = new Dictionary<int, PropertyChangedEventHandler>();
@@ -51,8 +51,7 @@ namespace LightsOutCube
         private readonly Dictionary<int, Material> _originalMaterials = new Dictionary<int, Material>();
         private readonly TimeSpan _flashInterval = TimeSpan.FromMilliseconds(300);
 
-        // new flag: do not show solution by default
-        private bool _showSolution = false;
+        // Show-solution state is owned by the ViewModel; do not keep a duplicate field here.
 
         public MainWindow()
         {
@@ -66,6 +65,7 @@ namespace LightsOutCube
             // cleanup on unload to avoid leaks
             this.Unloaded += OnUnloaded;
         }
+
         private void StartUpEffect()
         {
             try
@@ -87,20 +87,9 @@ namespace LightsOutCube
                 // best-effort: ignore if transform group unavailable
             }
         }
-        public void OnLoaded(Object sender, System.Windows.RoutedEventArgs args)
+
+        private void CreateCubesForButtons()
         {
-            // use the overlay border as the EventSource so mouse moves are detected consistently
-            _trackball = new Trackball(myTransformGroup)
-            {
-                EventSource = EventSourceBorder
-            };
-            _yellowMaterial = new DiffuseMaterial(new SolidColorBrush(Colors.Yellow));
-            _defaultMaterial = (Material)System.Windows.Application.Current.Resources["myFunkyMaterial"];
-
-            // solution material (distinct, can tweak color)
-            _solutionMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xFF)));
-
-            GradientManager.AnimateBackgroundToRandomGradient(MainGrid, durationMs: 800);
             _cubes.Add(myCube, -1);
             // create a couple extra cubes
             double ti, tj;
@@ -123,6 +112,24 @@ namespace LightsOutCube
                 }
             }
             myCube.Transform = new ScaleTransform3D(0.1, 0.1, 0.1);
+        }
+        public void OnLoaded(Object sender, System.Windows.RoutedEventArgs args)
+        {
+            // use the overlay border as the EventSource so mouse moves are detected consistently
+            _trackball = new Trackball(myTransformGroup)
+            {
+                EventSource = EventSourceBorder
+            };
+            // Initialize lit material from ViewModel selection (fallback to yellow)
+            var initialBrush = _viewModel?.SelectedLitBrush ?? new SolidColorBrush(Colors.Yellow);
+            _yellowMaterial = new DiffuseMaterial(initialBrush);
+            _offTransparentMaterial = (Material)System.Windows.Application.Current.Resources["TransparentMaterial"];
+
+            // solution material (distinct, can tweak color)
+            _solutionMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromRgb(0x00, 0xCC, 0xFF)));
+
+            GradientManager.AnimateBackgroundToRandomGradient(MainGrid, durationMs: 800);
+            CreateCubesForButtons();
             _viewModel.InitializeCells(_cubesByIndex.Keys);
             InitializeCellVisuals();
             StartUpEffect();
@@ -130,6 +137,52 @@ namespace LightsOutCube
 
             // show the startup splash overlay
             ShowStartupSplash();
+
+            // listen for changes to selected lit brush so UI updates materials
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(_viewModel.SelectedLitBrush))
+                {
+                    Dispatcher.BeginInvoke(new Action(() => UpdateLitMaterial()), DispatcherPriority.Background);
+                }
+            };
+        }
+
+        // Update the lit material when the ViewModel's SelectedLitBrush changes
+        private void UpdateLitMaterial()
+        {
+            try
+            {
+                var old = _yellowMaterial;
+                var brush = _viewModel?.SelectedLitBrush ?? new SolidColorBrush(Colors.Yellow);
+                var newMat = new DiffuseMaterial(brush);
+                _yellowMaterial = newMat;
+
+                // Update any currently lit cells to the new material
+                if (_viewModel?.CellsByIndex != null)
+                {
+                    foreach (var kvp in _cubesByIndex)
+                    {
+                        var idx = kvp.Key;
+                        var model3D = kvp.Value;
+                        if (_viewModel.CellsByIndex.TryGetValue(idx, out var cell) && cell.IsOn)
+                        {
+                            try { model3D.Material = _yellowMaterial; } catch { }
+                        }
+                    }
+                }
+
+                // If any stored original materials pointed to the old lit material, update them to new
+                var keys = _originalMaterials.Where(kv => ReferenceEquals(kv.Value, old)).Select(kv => kv.Key).ToList();
+                foreach (var k in keys)
+                {
+                    _originalMaterials[k] = _yellowMaterial;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateLitMaterial error: {ex}");
+            }
         }
         void InitializeCellVisuals()
         {
@@ -148,7 +201,7 @@ namespace LightsOutCube
                 // apply initial state
                 model3D.Material = cell.IsOn
                     ? _yellowMaterial
-                    : _defaultMaterial;
+                    : _offTransparentMaterial;
 
                 // subscribe to changes and update material on UI thread
                 PropertyChangedEventHandler handler = (s, e) =>
@@ -156,7 +209,7 @@ namespace LightsOutCube
                     if (e.PropertyName != nameof(cell.IsOn)) return;
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        model3D.Material = cell.IsOn ? _yellowMaterial : _defaultMaterial;
+                        model3D.Material = cell.IsOn ? _yellowMaterial : _offTransparentMaterial;
                     });
                 };
 
@@ -178,14 +231,25 @@ namespace LightsOutCube
             // When a new puzzle is selected, display its solution only if user requested it
             if (e.PropertyName == nameof(_viewModel.SelectedPuzzle))
             {
-                if (_viewModel.ShowSolution)
+                try
                 {
-                    Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
+                    if (_viewModel.ShowSolution)
+                    {
+                        // update button label and display solution
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            DisplaySolutionForCurrentPuzzle();
+                        }), DispatcherPriority.Background);
+                    }
+                    else
+                    {
+                        // always cancel any previous solution display when puzzle changes and user isn't showing solution
+                        CancelSolutionDisplay();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // always cancel any previous solution display when puzzle changes and user isn't showing solution
-                    CancelSolutionDisplay();
+                    System.Diagnostics.Debug.WriteLine($"Error handling SelectedPuzzle change: {ex}");
                 }
             }
 
@@ -196,10 +260,15 @@ namespace LightsOutCube
                 {
                     if (_viewModel.ShowSolution)
                     {
-                        Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
+                        // update button label and display solution
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            DisplaySolutionForCurrentPuzzle();
+                        }), DispatcherPriority.Background);
                     }
                     else
                     {
+                        // update button label and cancel
                         CancelSolutionDisplay();
                     }
                 }
@@ -215,20 +284,8 @@ namespace LightsOutCube
         {
             try
             {
-                _showSolution = !_showSolution;
-
-                if (_showSolution)
-                {
-                    ShowSolutionButton.Content = "Hide Solution";
-                    // display solution for the current puzzle
-                    Dispatcher.BeginInvoke(new Action(() => DisplaySolutionForCurrentPuzzle()), DispatcherPriority.Background);
-                }
-                else
-                {
-                    ShowSolutionButton.Content = "Show Solution";
-                    // hide solution highlights
-                    CancelSolutionDisplay();
-                }
+                // Toggle the ViewModel-owned flag; ViewModel_PropertyChanged will handle display
+                _viewModel.ShowSolution = !_viewModel.ShowSolution;
             }
             catch (Exception ex)
             {
@@ -423,12 +480,11 @@ namespace LightsOutCube
             try
             {
                 StopSolutionTimer(index);
-
                 // Determine final material based on current logical state (on->yellow, off->default)
-                Material final = _defaultMaterial;
+                Material final = _offTransparentMaterial;
                 if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
                 {
-                    final = cell.IsOn ? _yellowMaterial : _defaultMaterial;
+                    final = cell.IsOn ? _yellowMaterial : _offTransparentMaterial;
                 }
 
                 if (_cubesByIndex.TryGetValue(index, out var model3D))
@@ -725,11 +781,7 @@ namespace LightsOutCube
             if (model3D == null) return;
 
             // Ensure existing timer for this index is stopped
-            if (_solutionTimers.TryGetValue(index, out var existing))
-            {
-                try { existing.Stop(); } catch { /* Ignore error */ }
-                _solutionTimers.Remove(index);
-            }
+            StopSolutionTimer(index);
 
             // Remember original material
             if (!_originalMaterials.ContainsKey(index))
@@ -751,7 +803,7 @@ namespace LightsOutCube
                 {
                     try { ((DispatcherTimer)s).Stop(); } catch { /* Ignore error */ }
                     // restore safe fallback
-                    model3D.Material = _originalMaterials.ContainsKey(index) ? _originalMaterials[index] : _defaultMaterial;
+                    model3D.Material = _originalMaterials.ContainsKey(index) ? _originalMaterials[index] : _offTransparentMaterial;
                     _solutionTimers.Remove(index);
                 }
             }, Application.Current.Dispatcher);
@@ -767,7 +819,6 @@ namespace LightsOutCube
             {
                 StopSolutionTimer(_solutionTimers.First().Key);
             }
-            _solutionTimers.Clear();
 
             // restore materials
             foreach (var kvp in _originalMaterials)
@@ -798,7 +849,6 @@ namespace LightsOutCube
             // Cancel any solution display timers
             CancelSolutionDisplay();
 
-            // Optionally, stop any media playback
             try
             {
                 if (_startupPlayer != null)

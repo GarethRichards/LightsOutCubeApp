@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LightsOutCube"
         xmlns:mv="clr-namespace:LightsOutCube.ViewModels"
-        xmlns:conv="clr-namespace:LightsOutCube.Converters"
+        xmlns:conv="clr-namespace:LightsOutCube.Converters" 
+        d:DataContext="{d:DesignInstance Type=mv:CubeViewModel}"
         mc:Ignorable="d"
         Loaded="OnLoaded"
         MouseLeftButtonDown="OnClick"
@@ -17,12 +18,25 @@
     </Window.InputBindings>
     <Window.Resources>
         <conv:PuzzleIdToDisplayConverter x:Key="PuzzleIdToDisplayConverter" />
+        <conv:MinValueConverter x:Key="MinValueConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
     <DockPanel>
         <Grid Name="MainGrid">
             <!-- Viewport3D (unchanged) -->
             <Viewport3D Name="CubeViewport" Focusable="True" IsHitTestVisible="True" ClipToBounds="True" Grid.Column="0" Grid.Row="0">
+                <Viewport3D.Width>
+                    <MultiBinding Converter="{StaticResource MinValueConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
+                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Viewport3D.Width>
+                <Viewport3D.Height>
+                    <MultiBinding Converter="{StaticResource MinValueConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
+                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Viewport3D.Height>
                 <Viewport3D.Camera>
                     <PerspectiveCamera x:Name="CubeCamera" Position="0,0,-8" UpDirection="0,1,0" LookDirection="0,0,1" FieldOfView="45" NearPlaneDistance="0.125"/>
                 </Viewport3D.Camera>
@@ -74,7 +88,7 @@
                             </ModelVisual3D>
                             <ModelVisual3D>
                                 <ModelVisual3D.Content>
-                                    <GeometryModel3D x:Name="myCube" Geometry="{StaticResource myCube}"  Material="{StaticResource myFunkyMaterial}"/>
+                                    <GeometryModel3D x:Name="myCube" Geometry="{StaticResource myCube}"  Material="{StaticResource TransparentMaterial}"/>
                                 </ModelVisual3D.Content>
                             </ModelVisual3D>
                         </ModelVisual3D.Children>
@@ -114,79 +128,126 @@
                 </StackPanel>
             </Border>
 
-            <!-- About button top-right -->
-            <Button x:Name="AboutButton"
-                    Content="About"
+            <!-- Compact puzzle panel with expandable actions -->
+            <Expander x:Name="PuzzleExpander"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Bottom"
+                      Margin="12"
+                      IsExpanded="False"
+                      ExpandDirection="Right"
+                      Background="Transparent">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding SelectedPuzzle, Converter={StaticResource PuzzleIdToDisplayConverter}}" FontSize="14" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Expander.Header>
+                <Border Name="ExpandedSection"
+                    Background="#22000000"
+                    CornerRadius="10"
+                    Padding="0"
                     HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="12"
-                    Padding="6,4"
-                    Width="80"
-                    Click="AboutButton_Click"
-                    Opacity="0.35"/>
+                    VerticalAlignment="Top"
+                    Margin="1"
+                    IsHitTestVisible="True">
+                    <StackPanel Orientation="Horizontal" Background="Transparent" IsHitTestVisible="True" 
+                            Margin="8">
 
-            <!-- Puzzle combo + Reset overlay: bottom-left -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Background="Transparent" IsHitTestVisible="True">
-                <TextBlock Text="Puzzle:" FontSize="14" FontWeight="SemiBold" Foreground="Gray" Opacity="0.75" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="Select puzzle" />
-                <ComboBox ItemsSource="{Binding PuzzleList}"
-            SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}"
-            Width="80"
-            HorizontalAlignment="Left"
-            Margin="8">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Converter={StaticResource PuzzleIdToDisplayConverter}}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button x:Name="ResetButtonOverlay" Command="{Binding ResetCommand}" Content="Reset" Margin="8,0,0,0" Width="72" Background="Transparent" BorderBrush="White" BorderThickness="1" Foreground="Gray" Opacity="0.75" Padding="6" ToolTip="Reset puzzle" />
-                <Button x:Name="ShowSolutionButton"
-                        Command="{Binding ToggleShowSolutionCommand}"
-                        Content="{Binding ShowSolutionButtonText}"
-                        AutomationProperties.Name="Show or hide solution"
-                        AutomationProperties.HelpText="Press to toggle solution display"
-                        Margin="8,0,0,0"
-                        Width="120"
-                        Background="Transparent"
-                        BorderBrush="White"
-                        BorderThickness="1"
-                        Foreground="Gray"
-                        Opacity="0.35"
-                        Padding="6"
-                        ToolTip="Show solution" />
-            </StackPanel>
+                        <ComboBox ItemsSource="{Binding PuzzleList}"
+                              SelectedItem="{Binding SelectedPuzzle, Mode=TwoWay}"
+                              Width="80"
+                              Height="22"
+                              Margin="0,0,8,0"
+                              >
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource PuzzleIdToDisplayConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <!-- Lit color selector -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock Text="Lit:" Foreground="White" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <ComboBox ItemsSource="{Binding LitBrushes}"
+                                  SelectedItem="{Binding SelectedLitBrush, Mode=TwoWay}"
+                                  Width="50"
+                                  Height="22"
+                                  Margin="0,0,8,0">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Rectangle Width="16" Height="16" Fill="{Binding}" Stroke="Black" RadiusX="2" RadiusY="2" Margin="0,0,6,0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <Button x:Name="ResetButtonOverlay" Command="{Binding ResetCommand}" Content="Reset" 
+                            Margin="0,0,8,0" Width="60" 
+                            Background="Transparent" BorderBrush="White" 
+                            Foreground="Black" Opacity="0.7"
+                            Height="26"
+                            Style="{StaticResource RoundedButtonStyle}"
+                            ToolTip="Reset puzzle" />
+
+                        <Button x:Name="ShowSolutionButton"
+                            Command="{Binding ToggleShowSolutionCommand}"
+                            Content="{Binding ShowSolutionButtonText}"
+                            Style="{StaticResource RoundedButtonStyle}"
+                            AutomationProperties.Name="Show or hide solution"
+                            AutomationProperties.HelpText="Press to toggle solution display"
+                            Margin="0,0,8,0"
+                            Width="60"
+                            Height="26"
+                            Background="Transparent"
+                            BorderBrush="White"
+                            BorderThickness="1"
+                            Foreground="Black"
+                            Opacity="0.7"
+                            ToolTip="Show solution" />
+
+                        <Button x:Name="AboutButton" Content="About" Width="60" Margin="0" 
+                            Click="AboutButton_Click" 
+                            Height ="26"
+                            Style="{StaticResource RoundedButtonStyle}"
+                            Background="Transparent" BorderBrush="White" 
+                            BorderThickness="1" Foreground="Black" Opacity="0.7"/>
+                </StackPanel>
+                </Border>
+            </Expander>
 
             <!-- Solved banner: hidden by default; now a container with two TextBlocks bound to the ViewModel -->
-            <StackPanel x:Name="SolvedBanner"
-                        Visibility="Collapsed"
-                        Opacity="0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Top"
-                        Margin="0,24,0,0"
-                        IsHitTestVisible="False"
-                        Width="Auto"
-                        Background="#AA000000"
-                        TextOptions.TextFormattingMode="Ideal"
-                        TextOptions.TextRenderingMode="Auto"
-                        >
-                <TextBlock x:Name="SolvedBannerMain"
-                           Text="{Binding SolvedBannerText}"
-                           TextWrapping="Wrap"
-                           TextAlignment="Center"
-                           FontSize="28"
-                           FontWeight="Bold"
-                           Foreground="White"
-                           />
-                <TextBlock x:Name="SolvedBannerAdditional"
-                           Text="{Binding SolvedBannerAdditional}"
-                           TextWrapping="Wrap"
-                           TextAlignment="Center"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="LightGreen"
-                           Margin="0,6,0,0"
-                           />
-            </StackPanel>
+            <Border x:Name="SolvedBanner"
+                    Visibility="Collapsed"
+                    Opacity="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="12,24,12,0"
+                    IsHitTestVisible="False"
+                    Background="#AA000000"
+                    CornerRadius="8"
+                    Padding="12"
+                    TextOptions.TextFormattingMode="Ideal"
+                    TextOptions.TextRenderingMode="Auto">
+                <StackPanel Width="Auto">
+                    <TextBlock x:Name="SolvedBannerMain"
+                               Text="{Binding SolvedBannerText}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               />
+                    <TextBlock x:Name="SolvedBannerAdditional"
+                               Text="{Binding SolvedBannerAdditional}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="LightGreen"
+                               Margin="0,6,0,0"
+                               />
+                </StackPanel>
+            </Border>
 
             <!-- Startup splash screen border: collapsed by default -->
             <Border x:Name="StartupSplash"

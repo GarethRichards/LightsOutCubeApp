@@ -29,11 +29,17 @@
                         <TextBlock Foreground="White" Text="A small WPF 3D Lights‑Out puzzle demo. Written by Gareth Richards." TextWrapping="Wrap" Margin="0,0,0,12"/>
                         <TextBlock Foreground="White" Text="Credits" FontWeight="SemiBold" Margin="0,8,0,4"/>
                         <TextBlock Foreground="White" Text="• Trackball code adapted from 3DTools sample" TextWrapping="Wrap" Margin="0,0,0,2"/>
-                        <TextBlock Foreground="White" Text="• Gradient themes and animations by project" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <TextBlock Foreground="White" Text="• Gradient themes and animations by CoPilot" TextWrapping="Wrap" Margin="0,0,0,8"/>
                         <TextBlock Foreground="White" Text="Contact / Repository" FontWeight="SemiBold" Margin="0,8,0,4"/>
-                        <TextBlock Foreground="White" Text="https://github.com/GarethRichards/LightsOutCubeApp" TextWrapping="Wrap" Opacity="0.9" Margin="0,0,0,12"/>
+                        <TextBlock Foreground="White" TextWrapping="Wrap" Opacity="0.9" Margin="0,0,0,12">
+                            <Hyperlink NavigateUri="http://github.com/GarethRichards/LightsOutCubeApp" RequestNavigate="Hyperlink_RequestNavigate">
+                                http://github.com/GarethRichards/LightsOutCubeApp
+                            </Hyperlink>
+                        </TextBlock>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="CloseButton" Width="84" Padding="6,4" Margin="6,0,0,0" Click="CloseButton_Click">Close</Button>
+                            <Button x:Name="CloseButton" Foreground="White" Height="30"
+                                Style="{StaticResource RoundedButtonStyle}"
+                                Width="84" Padding="6,4" Margin="6,0,0,0" Click="CloseButton_Click">Close</Button>
                         </StackPanel>
                     </StackPanel>
                 </Grid>

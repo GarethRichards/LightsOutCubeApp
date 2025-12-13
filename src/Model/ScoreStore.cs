@@ -17,11 +17,6 @@ namespace LightsOutCube.Model
         private static readonly string SpeedRunFilePath = Path.Combine(DirectoryPath, "speedrun.json");
         private static readonly object Sync = new object();
 
-        public ScoreStore()
-        {
-            Directory.CreateDirectory(DirectoryPath);
-        }
-
         // --- per-puzzle best scores (existing) ---
         public static IList<ScoreRecord> LoadAll()
         {
@@ -69,6 +64,7 @@ namespace LightsOutCube.Model
         {
             lock (Sync)
             {
+                Directory.CreateDirectory(DirectoryPath);
                 using (var stream = File.Create(FilePath))
                 {
                     var ser = new DataContractJsonSerializer(typeof(List<ScoreRecord>));
@@ -138,6 +134,7 @@ namespace LightsOutCube.Model
 
             lock (Sync)
             {
+                Directory.CreateDirectory(DirectoryPath);
                 try
                 {
                     // Load existing stats (if any) and append the new summary.

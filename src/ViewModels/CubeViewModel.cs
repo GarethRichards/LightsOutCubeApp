@@ -21,7 +21,6 @@ namespace LightsOutCube.ViewModels
         private readonly PuzzleModel _puzzleModel = new PuzzleModel();
         private readonly Stopwatch _solveTimer = new Stopwatch();
         private readonly Stopwatch _speedRunStopwatch = new Stopwatch();
-        private readonly LightsOutCube.Model.ScoreStore _scoreStore = new LightsOutCube.Model.ScoreStore();
 
         // UI timer to update elapsed display
         private readonly DispatcherTimer _uiTimer;
@@ -99,6 +98,18 @@ namespace LightsOutCube.ViewModels
 
             // command to toggle showing solution (View binds to this)
             ToggleShowSolutionCommand = new RelayCommand(ToggleShowSolution);
+
+            // available lit colors
+            LitBrushes = new ObservableCollection<SolidColorBrush>
+            {
+                new SolidColorBrush(Colors.Yellow),
+                new SolidColorBrush(Colors.Orange),
+                new SolidColorBrush(Colors.Red),
+                new SolidColorBrush(Colors.LimeGreen),
+                new SolidColorBrush(Colors.Cyan),
+                new SolidColorBrush(Colors.Magenta)
+            };
+            SelectedLitBrush = LitBrushes[0];
 
             // default to first real puzzle
             SelectedPuzzle = 1;
@@ -182,7 +193,7 @@ namespace LightsOutCube.ViewModels
             }
         }
 
-        public string ShowSolutionButtonText => ShowSolution ? "Hide Solution" : "Show Solution";
+        public string ShowSolutionButtonText => ShowSolution ? "Hide" : "Solve";
 
         // Command exposed to the View to toggle showing the solution
         public ICommand ToggleShowSolutionCommand { get; }
@@ -237,7 +248,6 @@ namespace LightsOutCube.ViewModels
                     _speedRunRecords.Add(rec);
 
                 SpeedRunSolvedCount++;
-
                 // advance to next puzzle if available, otherwise end speed run
                 int maxPuzzle = PuzzleList.Where(x => x != SpeedRunPuzzleId).DefaultIfEmpty(1).Max();
                 if (_selectedPuzzle < maxPuzzle)
@@ -253,7 +263,6 @@ namespace LightsOutCube.ViewModels
                     EndSpeedRun();
                 }
             }
-
         }
 
         // Called by the View when model changes or a toggle occurs
@@ -399,6 +408,8 @@ namespace LightsOutCube.ViewModels
         // finish a speed run
         private void EndSpeedRun()
         {
+            if (!IsSpeedRunMode)
+                return;
             _speedRunStopwatch.Stop();
             _uiTimer.Stop();
             IsSpeedRunMode = false;
@@ -440,6 +451,16 @@ namespace LightsOutCube.ViewModels
                 SelectedPuzzle = 1;
         }
         public ObservableCollection<int> PuzzleList { get; }
+
+        // Brushes available for lit buttons
+        public ObservableCollection<SolidColorBrush> LitBrushes { get; }
+
+        private SolidColorBrush _selectedLitBrush;
+        public SolidColorBrush SelectedLitBrush
+        {
+            get => _selectedLitBrush;
+            set => SetProperty(ref _selectedLitBrush, value);
+        }
 
         private Color _gradientStart = Colors.DarkBlue;
         public Color GradientStart

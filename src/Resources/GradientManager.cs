@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,68 +47,35 @@ namespace LightsOutCube.Resources
             var target = targetBrush.Clone();
             target.Freeze(); // safe to keep frozen; we only read colors from it
 
-            if (!(host.Background is LinearGradientBrush current))
-            {
-                // No existing gradient — set target immediately (or set a clone so future animations can run)
-                host.Background = targetBrush.Clone();
-                return;
-            }
+            host.Background = targetBrush.Clone();
 
-            // animate matching gradient stops; if counts differ, add missing stops
-            int min = Math.Min(current.GradientStops.Count, target.GradientStops.Count);
 
-            var duration = new Duration(TimeSpan.FromMilliseconds(durationMs));
-            var easing = new QuadraticEase { EasingMode = EasingMode.EaseOut };
-
-            // Animate existing stops
-            for (int i = 0; i < min; i++)
-            {
-                var toColor = target.GradientStops[i].Color;
-                var anim = new ColorAnimation(toColor, duration) { EasingFunction = easing };
-                current.GradientStops[i].BeginAnimation(GradientStop.ColorProperty, anim);
-            }
-
-            // If target has additional stops, append them and animate from last color
-            if (target.GradientStops.Count > current.GradientStops.Count)
-            {
-                var lastColor = current.GradientStops[current.GradientStops.Count - 1].Color;
-                for (int i = min; i < target.GradientStops.Count; i++)
-                {
-                    var gs = new GradientStop(lastColor, target.GradientStops[i].Offset);
-                    current.GradientStops.Add(gs);
-                    var anim = new ColorAnimation(target.GradientStops[i].Color, duration) { EasingFunction = easing };
-                    gs.BeginAnimation(GradientStop.ColorProperty, anim);
-                }
-            }
-            // If current has extra stops, animate them to the last target color
-            else if (current.GradientStops.Count > target.GradientStops.Count)
-            {
-                var finalColor = target.GradientStops[current.GradientStops.Count - 1].Color;
-                for (int i = min; i < current.GradientStops.Count; i++)
-                {
-                    var anim = new ColorAnimation(finalColor, duration) { EasingFunction = easing };
-                    current.GradientStops[i].BeginAnimation(GradientStop.ColorProperty, anim);
-                }
-            }
         }
 
         // Convenience: pick a random gradient from resources and animate host to it
         public static void AnimateBackgroundToRandomGradient(Panel host, ResourceDictionary dictionary = null, int durationMs = 800)
         {
-            var dict = dictionary ?? 
-                (Application.Current.Resources["MergedGradients"] as ResourceDictionary).MergedDictionaries[0];
-            var brush = PickRandomGradient(dict);
-            if (brush == null)
-                return;
-
-            // Ensure we call on UI thread if not already
-            if (!host.Dispatcher.CheckAccess())
+            try
             {
-                host.Dispatcher.Invoke(() => AnimateBackgroundToBrush(host, brush, durationMs));
-                return;
+                var dict = dictionary ??
+                    (Application.Current.Resources["MergedGradients"] as ResourceDictionary).MergedDictionaries[0];
+                var brush = PickRandomGradient(dict);
+                if (brush == null)
+                    return;
+
+                // Ensure we call on UI thread if not already
+                if (!host.Dispatcher.CheckAccess())
+                {
+                    host.Dispatcher.Invoke(() => AnimateBackgroundToBrush(host, brush, durationMs));
+                    return;
+                }
+                AnimateBackgroundToBrush(host, brush, durationMs);
+            }
+            catch (Exception ex)
+            {
+                Debug.Write($"Failed to load new gradent {ex.Message} {ex.StackTrace}");
             }
 
-            AnimateBackgroundToBrush(host, brush, durationMs);
         }
     }
 }

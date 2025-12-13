@@ -25,7 +25,7 @@
 
                     <StackPanel Grid.Column="1">
                         <TextBlock Foreground="White" Text="LightsOut Cube" FontSize="22" FontWeight="Bold" Margin="0,0,0,6"/>
-                        <TextBlock Foreground="White" x:Name="VersionText" FontSize="12" Opacity="0.9" Margin="0,0,0,12"/>
+                        <TextBlock Foreground="White" Text="{Binding Version}" FontSize="12" Opacity="0.9" Margin="0,0,0,12"/>
                         <TextBlock Foreground="White" Text="A small WPF 3D Lights‑Out puzzle demo. Written by Gareth Richards." TextWrapping="Wrap" Margin="0,0,0,12"/>
                         <TextBlock Foreground="White" Text="Credits" FontWeight="SemiBold" Margin="0,8,0,4"/>
                         <TextBlock Foreground="White" Text="• Trackball code adapted from 3DTools sample" TextWrapping="Wrap" Margin="0,0,0,2"/>

@@ -3,8 +3,13 @@
     <TargetFramework>net48</TargetFramework>
     <UseWPF>true</UseWPF>
 
-    <!-- preserve existing assembly info file -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- let MSBuild generate assembly info and populate versions from GitVersion -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- use GitVersion properties for assembly/file/informational versions -->
+    <AssemblyVersion>$(GitVersion_AssemblySemVer)</AssemblyVersion>
+    <FileVersion>$(GitVersion_AssemblySemFileVer)</FileVersion>
+    <InformationalVersion>$(GitVersion_NuGetVersionV2)</InformationalVersion>
+    <Version>$(GitVersion_NuGetVersionV2)</Version>
 
     <!-- metadata -->
     <AssemblyName>LightsOutCube</AssemblyName>
@@ -53,6 +58,7 @@
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <PackageReference Include="GitVersion.MsBuild" Version="6.0.0" PrivateAssets="all" />
   </ItemGroup>
   
   <ItemGroup>

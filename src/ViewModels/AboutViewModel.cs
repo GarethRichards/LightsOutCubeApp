@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using LightsOutCube.Model;
+using System.Reflection;
 
 namespace LightsOutCube.ViewModels
 {
@@ -9,6 +10,38 @@ namespace LightsOutCube.ViewModels
     {
         public ObservableCollection<SpeedRunEntryWrapper> SpeedRuns { get; } = new ObservableCollection<SpeedRunEntryWrapper>();
         public ObservableCollection<HighScoreEntry> HighScores { get; } = new ObservableCollection<HighScoreEntry>();
+        string _version = "";
+        public string Version
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_version))
+                    return _version;
+                
+                try
+                {
+                    var asm = System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly();
+                    string version = null;
+                    var infoAttr = asm.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>();
+                    if (infoAttr != null && !string.IsNullOrWhiteSpace(infoAttr.InformationalVersion))
+                        version = infoAttr.InformationalVersion;
+                    if (string.IsNullOrEmpty(version))
+                    {
+                        var fileAttr = asm.GetCustomAttribute<System.Reflection.AssemblyFileVersionAttribute>();
+                        if (fileAttr != null && !string.IsNullOrWhiteSpace(fileAttr.Version))
+                            version = fileAttr.Version;
+                    }
+                    if (string.IsNullOrEmpty(version))
+                        version = asm.GetName().Version?.ToString() ?? "n/a";
+                    _version = version;
+                }
+                catch
+                {
+                    _version = "n/a";
+                }
+                return _version;
+            }
+        }
 
         public void Refresh()
         {

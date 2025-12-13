@@ -7,8 +7,6 @@ namespace LightsOutCube.ViewModels
 {
     public class AboutViewModel
     {
-        private readonly ScoreStore _scoreStore = new ScoreStore();
-
         public ObservableCollection<SpeedRunEntryWrapper> SpeedRuns { get; } = new ObservableCollection<SpeedRunEntryWrapper>();
         public ObservableCollection<HighScoreEntry> HighScores { get; } = new ObservableCollection<HighScoreEntry>();
 

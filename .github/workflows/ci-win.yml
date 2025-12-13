@@ -36,3 +36,19 @@ jobs:
           name: build-output
           path: |
             src\**\bin\Release\**
+
+      - name: Show generated version from built assembly
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'src\bin\Release\net48\LightsOutCube.exe'
+          if (Test-Path $exe) {
+              $vi = (Get-Item $exe).VersionInfo
+              Write-Host "Assembly file path: $exe"
+              Write-Host "ProductVersion (InformationalVersion/File product): $($vi.ProductVersion)"
+              Write-Host "FileVersion: $($vi.FileVersion)"
+              Write-Host "ProductName: $($vi.ProductName)"
+          } else {
+              Write-Host "Build output not found at $exe"
+              Write-Host "Directory listing:" 
+              Get-ChildItem -Recurse -Force src\bin | Format-List
+          }

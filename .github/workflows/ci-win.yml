@@ -63,7 +63,7 @@ jobs:
       - name: Download app artifacts
         uses: actions/download-artifact@v4
         with:
-          name: app-artifact
+          name: build-output
           path: dist
 
       - name: Install WiX (choco)

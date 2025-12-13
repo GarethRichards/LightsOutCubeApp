@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository (fetch full history & tags)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET (optional)
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore NuGet packages
+        run: dotnet restore src/LightsOutCube.csproj
+
+      - name: Build (Release)
+        run: dotnet build src/LightsOutCube.csproj -c Release --no-restore
+
+      - name: Show generated version from built assembly
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'src\bin\Release\net48\LightsOutCube.exe'
+          if (Test-Path $exe) {
+              $vi = (Get-Item $exe).VersionInfo
+              Write-Host "Assembly file path: $exe"
+              Write-Host "ProductVersion (InformationalVersion/File product): $($vi.ProductVersion)"
+              Write-Host "FileVersion: $($vi.FileVersion)"
+              Write-Host "ProductName: $($vi.ProductName)"
+          } else {
+              Write-Host "Build output not found at $exe"
+              Write-Host "Directory listing:" 
+              Get-ChildItem -Recurse -Force src\bin | Format-List
+          }

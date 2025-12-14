@@ -47,9 +47,14 @@ namespace LightsOutCube
 
         // Solution display members
         private Material _solutionMaterial;
-        private readonly Dictionary<int, DispatcherTimer> _solutionTimers = new Dictionary<int, DispatcherTimer>();
+        // single shared timer so all solution flashes are synchronized
+        private DispatcherTimer _solutionTimer;
+        // set of indices currently flashing
+        private readonly HashSet<int> _flashingIndices = new HashSet<int>();
         private readonly Dictionary<int, Material> _originalMaterials = new Dictionary<int, Material>();
         private readonly TimeSpan _flashInterval = TimeSpan.FromMilliseconds(300);
+        // toggle state used by shared timer: true means next tick will restore original material
+        private bool _solutionLit = true;
 
         // Show-solution state is owned by the ViewModel; do not keep a duplicate field here.
 
@@ -466,46 +471,61 @@ namespace LightsOutCube
             // removed click-driven puzzle advance — puzzle now advances automatically after the solved celebration
         }
 
-        private void StopSolutionTimer(int index)
-        {
-            if (_solutionTimers.TryGetValue(index, out var timer))
-            {
-                try { timer.Stop(); } catch { /* Ignore errors */ }
-                _solutionTimers.Remove(index);
-            }
-        }
         // Stop flashing for a single solution index and restore the appropriate material.
         private void StopFlashForModel(int index)
         {
             try
             {
-                StopSolutionTimer(index);
-                // Determine final material based on current logical state (on->yellow, off->default)
-                Material final = _offTransparentMaterial;
-                if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
-                {
-                    final = cell.IsOn ? _litMaterial : _offTransparentMaterial;
-                }
-
-                if (_cubesByIndex.TryGetValue(index, out var model3D))
-                {
-                    model3D.Material = final;
-                }
-
-                // remove stored original as we've restored appropriate material
-                if (_originalMaterials.ContainsKey(index))
-                    _originalMaterials.Remove(index);
+                RemoveFlashingIndex(index);
+                RestoreFinalMaterial(index);
+                RemoveOriginalMaterial(index);
+                StopSolutionTimerIfNoFlashing();
             }
             catch
             {
                 // best-effort cleanup
                 try
                 {
-                    StopSolutionTimer(index);
-                    if (_originalMaterials.ContainsKey(index))
-                        _originalMaterials.Remove(index);
+                    RemoveFlashingIndex(index);
+                    RemoveOriginalMaterial(index);
+                    StopSolutionTimerIfNoFlashing();
                 }
                 catch { /* Ignore errors */ }
+            }
+        }
+
+        private void RemoveFlashingIndex(int index)
+        {
+            _flashingIndices.Remove(index);
+        }
+
+        private void RestoreFinalMaterial(int index)
+        {
+            // Determine final material based on current logical state (on->yellow, off->default)
+            Material final = _offTransparentMaterial;
+            if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
+            {
+                final = cell.IsOn ? _litMaterial : _offTransparentMaterial;
+            }
+
+            if (_cubesByIndex.TryGetValue(index, out var model3D))
+            {
+                model3D.Material = final;
+            }
+        }
+
+        private void RemoveOriginalMaterial(int index)
+        {
+            if (_originalMaterials.ContainsKey(index))
+                _originalMaterials.Remove(index);
+        }
+
+        private void StopSolutionTimerIfNoFlashing()
+        {
+            if (_flashingIndices.Count == 0)
+            {
+                try { _solutionTimer?.Stop(); } catch { /* Ignore errors */ }
+                _solutionTimer = null;
             }
         }
 
@@ -780,45 +800,62 @@ namespace LightsOutCube
         {
             if (model3D == null) return;
 
-            // Ensure existing timer for this index is stopped
-            StopSolutionTimer(index);
-
             // Remember original material
             if (!_originalMaterials.ContainsKey(index))
                 _originalMaterials[index] = model3D.Material;
 
-            bool lit = true;
-            // Start with solution material visible immediately
+            // Add to flashing set and show solution material immediately
+            _flashingIndices.Add(index);
             model3D.Material = _solutionMaterial;
 
-            var timer = new DispatcherTimer(_flashInterval, DispatcherPriority.Normal, (s, e) =>
+            // Ensure the shared timer is running
+            if (_solutionTimer == null)
             {
-                try
+                _solutionLit = true; // next tick will restore original materials
+                _solutionTimer = new DispatcherTimer(_flashInterval, DispatcherPriority.Normal, (s, e) =>
                 {
-                    // toggle material each tick
-                    model3D.Material = lit ? _originalMaterials[index] : _solutionMaterial;
-                    lit = !lit;
-                }
-                catch
-                {
-                    try { ((DispatcherTimer)s).Stop(); } catch { /* Ignore error */ }
-                    // restore safe fallback
-                    model3D.Material = _originalMaterials.ContainsKey(index) ? _originalMaterials[index] : _offTransparentMaterial;
-                    _solutionTimers.Remove(index);
-                }
-            }, Application.Current.Dispatcher);
+                    DisplayFlashingSolution();
+                }, Application.Current.Dispatcher);
 
-            // Keep reference so it can be stopped later; timer runs indefinitely until CancelSolutionDisplay is called
-            _solutionTimers[index] = timer;
-            timer.Start();
+                _solutionTimer.Start();
+            }
+        }
+
+        private void DisplayFlashingSolution()
+        {
+            try
+            {
+                foreach (var idx in _flashingIndices.ToList())
+                {
+                    try
+                    {
+                        if (_cubesByIndex.TryGetValue(idx, out var m3d) && _originalMaterials.ContainsKey(idx))
+                        {
+                            m3d.Material = _solutionLit ? _originalMaterials[idx] : _solutionMaterial;
+                        }
+                    }
+                    catch { /* per-item best-effort */ }
+                }
+
+                // flip for next tick
+                _solutionLit = !_solutionLit;
+            }
+            catch
+            {
+                try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
+                _solutionTimer = null;
+            }
         }
 
         private void CancelSolutionDisplay()
         {
-            while (_solutionTimers.Count!=0)
+            try
             {
-                StopSolutionTimer(_solutionTimers.First().Key);
+                try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
+                _solutionTimer = null;
+                _flashingIndices.Clear();
             }
+            catch { /* ignore */ }
 
             // restore materials
             foreach (var kvp in _originalMaterials)

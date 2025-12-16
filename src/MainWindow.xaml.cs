@@ -851,19 +851,29 @@ namespace LightsOutCube
         {
             try
             {
-                try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
+                try { _solutionTimer?.Stop(); } catch { /* ignore error */}
                 _solutionTimer = null;
                 _flashingIndices.Clear();
             }
             catch { /* ignore */ }
 
             // restore materials
-            foreach (var kvp in _originalMaterials)
+            // Prefer restoring based on current logical state so Reset and VM updates cannot be overridden
+            foreach (var kvp in _originalMaterials.Keys.ToList())
             {
                 try
                 {
-                    if (_cubesByIndex.TryGetValue(kvp.Key, out var model3D))
-                        model3D.Material = kvp.Value;
+                    // determine finalState material based on current logical state (on->lit, off->default)
+                    var finalState = _offTransparentMaterial;
+                    if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(kvp, out var cell))
+                    {
+                        finalState = cell.IsOn ? _litMaterial : _offTransparentMaterial;
+                    }
+
+                    if (_cubesByIndex.TryGetValue(kvp, out var model3D))
+                    {
+                        model3D.Material = finalState;
+                    }
                 }
                 catch { /* Ignore errors */ }
             }

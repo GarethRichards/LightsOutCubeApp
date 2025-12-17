@@ -19,10 +19,10 @@ namespace LightsOutCube
     {
         readonly private double _cubeScale = 0.14;
         readonly private CubeViewModel _viewModel;
-        readonly private Dictionary<GeometryModel3D, int> _cubes = new Dictionary<GeometryModel3D, int>();
-        readonly private Dictionary<int, GeometryModel3D> _cubesByIndex = new Dictionary<int, GeometryModel3D>();
+        readonly private Dictionary<GeometryModel3D, int> _cubes = [];
+        readonly private Dictionary<int, GeometryModel3D> _cubesByIndex = [];
         // map index -> translate transform for animation
-        readonly private Dictionary<int, TranslateTransform3D> cubeTranslateByIndex = new Dictionary<int, TranslateTransform3D>();
+        readonly private Dictionary<int, TranslateTransform3D> cubeTranslateByIndex = [];
 
         readonly private int[] model = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 39, 36, 33, 38, 35, 32, 37, 34, 31, 53, 52, 51, 56, 55, 54, 59, 58, 57, 23, 26, 29, 22, 25, 28, 21, 24, 27, 49, 46, 43, 48, 45, 42, 47, 44, 41, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
 
@@ -32,12 +32,12 @@ namespace LightsOutCube
         private Material _offTransparentMaterial;
 
         // store handlers so we can unsubscribe on unload
-        private readonly Dictionary<int, PropertyChangedEventHandler> _cellHandlers = new Dictionary<int, PropertyChangedEventHandler>();
+        private readonly Dictionary<int, PropertyChangedEventHandler> _cellHandlers = [];
 
         // how far a button moves toward the center when pressed (tweak as needed)
         private const double _pressInset = 0.12;
 
-        private readonly Random _rand = new Random();
+        private readonly Random _rand = new();
 
         // Guard to prevent the solved celebration being started multiple times concurrently
         private bool _celebrationRunning = false;
@@ -49,9 +49,6 @@ namespace LightsOutCube
         private Material _solutionMaterial;
         // single shared timer so all solution flashes are synchronized
         private DispatcherTimer _solutionTimer;
-        // set of indices currently flashing
-        private readonly HashSet<int> _flashingIndices = new HashSet<int>();
-        private readonly Dictionary<int, Material> _originalMaterials = new Dictionary<int, Material>();
         private readonly TimeSpan _flashInterval = TimeSpan.FromMilliseconds(300);
         // toggle state used by shared timer: true means next tick will restore original material
         private bool _solutionLit = true;
@@ -158,31 +155,24 @@ namespace LightsOutCube
         {
             try
             {
-                var old = _litMaterial;
                 var brush = _viewModel?.SelectedLitBrush ?? new SolidColorBrush(Colors.Yellow);
                 var newMat = new DiffuseMaterial(brush);
                 _litMaterial = newMat;
 
                 // Update any currently lit cells to the new material
-                if (_viewModel?.CellsByIndex != null)
+                if (_viewModel?.CellsByIndex == null)
+                    return;
+                
+                foreach (var kvp in _cubesByIndex)
                 {
-                    foreach (var kvp in _cubesByIndex)
-                    {
-                        var idx = kvp.Key;
-                        var model3D = kvp.Value;
-                        if (_viewModel.CellsByIndex.TryGetValue(idx, out var cell) && cell.IsOn)
-                        {
-                            model3D.Material = _litMaterial;
-                        }
-                    }
+                    var idx = kvp.Key;
+                    var model3D = kvp.Value;
+                    if (model3D == null) continue;
+                    _viewModel.CellsByIndex.TryGetValue(idx, out var cell);
+                    model3D.Material = cell.IsOn ? _litMaterial : _offTransparentMaterial;
+                        
                 }
-
-                // If any stored original materials pointed to the old lit material, update them to new
-                var keys = _originalMaterials.Where(kv => ReferenceEquals(kv.Value, old)).Select(kv => kv.Key).ToList();
-                foreach (var k in keys)
-                {
-                    _originalMaterials[k] = _litMaterial;
-                }
+                
             }
             catch (Exception ex)
             {
@@ -433,13 +423,13 @@ namespace LightsOutCube
 
         private void CreateCube(int Index, TranslateTransform3D TT)
         {
-            ModelVisual3D extraCube = new ModelVisual3D();
-            Model3DGroup modelGroup = new Model3DGroup();
+            var extraCube = new ModelVisual3D();
+            var modelGroup = new Model3DGroup();
             var model3d = myCube.Clone();
 
             modelGroup.Children.Add(model3d);
             extraCube.Content = modelGroup;
-            Transform3DGroup tg = new Transform3DGroup();
+            var tg = new Transform3DGroup();
             extraCube.Transform = tg;
 
             tg.Children.Add(new ScaleTransform3D(_cubeScale, _cubeScale, _cubeScale));
@@ -463,8 +453,8 @@ namespace LightsOutCube
 
         void OnClick(Object sender, MouseButtonEventArgs args)
         {
-            System.Windows.Point mouseposition = args.GetPosition(CubeViewport);
-            PointHitTestParameters pointparams = new PointHitTestParameters(mouseposition);
+            var mouseposition = args.GetPosition(CubeViewport);
+            var pointparams = new PointHitTestParameters(mouseposition);
 
             VisualTreeHelper.HitTest(CubeViewport, null, HTResult, pointparams);
 
@@ -476,9 +466,7 @@ namespace LightsOutCube
         {
             try
             {
-                RemoveFlashingIndex(index);
                 RestoreFinalMaterial(index);
-                RemoveOriginalMaterial(index);
                 StopSolutionTimerIfNoFlashing();
             }
             catch
@@ -486,43 +474,28 @@ namespace LightsOutCube
                 // best-effort cleanup
                 try
                 {
-                    RemoveFlashingIndex(index);
-                    RemoveOriginalMaterial(index);
                     StopSolutionTimerIfNoFlashing();
                 }
                 catch { /* Ignore errors */ }
             }
         }
 
-        private void RemoveFlashingIndex(int index)
-        {
-            _flashingIndices.Remove(index);
-        }
-
         private void RestoreFinalMaterial(int index)
         {
             // Determine final material based on current logical state (on->yellow, off->default)
-            Material final = _offTransparentMaterial;
-            if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(index, out var cell))
-            {
-                final = cell.IsOn ? _litMaterial : _offTransparentMaterial;
-            }
+            bool isOn = _viewModel?.CellsByIndex != null
+                && _viewModel.CellsByIndex.TryGetValue(index, out var cell) && cell?.IsOn == true;
+            var buttonMaterial = isOn ? _litMaterial : _offTransparentMaterial;
 
             if (_cubesByIndex.TryGetValue(index, out var model3D))
             {
-                model3D.Material = final;
+                model3D.Material = buttonMaterial;
             }
-        }
-
-        private void RemoveOriginalMaterial(int index)
-        {
-            if (_originalMaterials.ContainsKey(index))
-                _originalMaterials.Remove(index);
         }
 
         private void StopSolutionTimerIfNoFlashing()
         {
-            if (_flashingIndices.Count == 0)
+            if (_viewModel.SolutionMask == 0L && _solutionTimer!=null)
             {
                 try { _solutionTimer?.Stop(); } catch { /* Ignore errors */ }
                 _solutionTimer = null;
@@ -531,13 +504,13 @@ namespace LightsOutCube
 
         public HitTestResultBehavior HTResult(System.Windows.Media.HitTestResult rawresult)
         {
-            if (!(rawresult is RayHitTestResult rayResult))
+            if (rawresult is not RayHitTestResult rayResult)
                 return HitTestResultBehavior.Stop;
 
-            if (!(rayResult is RayMeshGeometry3DHitTestResult meshResult))
+            if (rayResult is not RayMeshGeometry3DHitTestResult meshResult)
                 return HitTestResultBehavior.Stop;
 
-            if (!(meshResult.ModelHit is GeometryModel3D hitgeo))
+            if (meshResult.ModelHit is not GeometryModel3D hitgeo)
                 return HitTestResultBehavior.Stop;
 
             if (!_cubes.TryGetValue(hitgeo, out int iButton))
@@ -555,17 +528,7 @@ namespace LightsOutCube
                         {
                             _viewModel.Toggle(iButton);
                             _viewModel.SetCube();
-
-                            // If this button was part of the currently displayed solution, stop its flashing.
-                            // ViewModel.SolutionMask contains the solution mask; stop flashing if bit set.
-                            try
-                            {
-                                if ((_viewModel.SolutionMask & (1L << iButton)) != 0)
-                                {
-                                    StopFlashForModel(iButton);
-                                }
-                            }
-                            catch { /* ignore */ }
+                            StopFlashForModel(iButton);
                         }
                         catch (Exception ex)
                         {
@@ -733,24 +696,6 @@ namespace LightsOutCube
             }
         }
 
-        // -------------------- Solution display logic --------------------
-
-        // Build a long-state mask from ViewModel.CellsByIndex (1L << index)
-        private long BuildCurrentMaskFromViewModel()
-        {
-            long mask = 0L;
-            if (_viewModel?.CellsByIndex == null) return mask;
-
-            foreach (var kvp in _viewModel.CellsByIndex)
-            {
-                int idx = kvp.Key;
-                var cell = kvp.Value;
-                if (cell.IsOn)
-                    mask |= (1L << idx);
-            }
-            return mask;
-        }
-
         // Public entry - called when a new puzzle is set
         private void DisplaySolutionForCurrentPuzzle()
         {
@@ -758,37 +703,8 @@ namespace LightsOutCube
             {
                 // cancel previous display first
                 CancelSolutionDisplay();
-
-                // prepare solver
-                var solver = new LightsOutCube.Model.LightsOutCubeSolver();
-
-                // set current state
-                var currentMask = BuildCurrentMaskFromViewModel();
-                solver.SetCurrent(currentMask);
-
-                // If your solver requires masks (bot/mid/top) they must be initialized here.
-                // The converted solver has setters SetBotMasks/SetMidMasks/SetTopMasks which you can call
-                // if you have those masks available from LightsOutCubeModel. If not needed, skip.
-
-                var found = solver.Solve();
-                if (!found)
-                    return;
-
-                var solMask = solver.Solution;
-                // For each cell that should be pressed, start a flash timer
-                foreach (var kvp in _cubesByIndex)
-                {
-                    int index = kvp.Key;
-                    var model3D = kvp.Value;
-                    if ((solMask & (1L << index)) != 0)
-                    {
-                        // remember original material
-                        if (!_originalMaterials.ContainsKey(index))
-                            _originalMaterials[index] = model3D.Material;
-
-                        StartFlashForModel(index, model3D);
-                    }
-                }
+                StartFlashForModel();
+                
             }
             catch (Exception ex)
             {
@@ -796,18 +712,8 @@ namespace LightsOutCube
             }
         }
 
-        private void StartFlashForModel(int index, GeometryModel3D model3D)
+        private void StartFlashForModel()
         {
-            if (model3D == null) return;
-
-            // Remember original material
-            if (!_originalMaterials.ContainsKey(index))
-                _originalMaterials[index] = model3D.Material;
-
-            // Add to flashing set and show solution material immediately
-            _flashingIndices.Add(index);
-            model3D.Material = _solutionMaterial;
-
             // Ensure the shared timer is running
             if (_solutionTimer == null)
             {
@@ -825,59 +731,45 @@ namespace LightsOutCube
         {
             try
             {
-                foreach (var idx in _flashingIndices.ToList())
-                {
-                    try
-                    {
-                        if (_cubesByIndex.TryGetValue(idx, out var m3d) && _originalMaterials.ContainsKey(idx))
-                        {
-                            m3d.Material = _solutionLit ? _originalMaterials[idx] : _solutionMaterial;
-                        }
-                    }
-                    catch { /* per-item best-effort */ }
-                }
-
+                SetCubState(_solutionLit);
                 // flip for next tick
                 _solutionLit = !_solutionLit;
             }
             catch
             {
                 try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
-                _solutionTimer = null;
+                _solutionTimer = null; 
+                _solutionLit=false;
             }
         }
 
+        private void SetCubState(bool solutionLit)
+        {
+            foreach (var idx in _cubes.Select(x => x.Value).Where(x => x > 0))
+            {
+                if (!_cubesByIndex.TryGetValue(idx, out var m3d) || m3d == null) continue;
+                if (solutionLit && _viewModel.InSolution(idx))
+                {
+                    m3d.Material = _solutionMaterial;
+                }
+                else
+                {
+                    bool isOn = _viewModel?.CellsByIndex != null
+                        && _viewModel.CellsByIndex.TryGetValue(idx, out var cell) && cell?.IsOn == true;
+                    m3d.Material = isOn ? _litMaterial : _offTransparentMaterial;
+                }
+            }
+        }
         private void CancelSolutionDisplay()
         {
-            try
+            if (_solutionTimer != null)
             {
                 try { _solutionTimer?.Stop(); } catch { /* ignore error */}
                 _solutionTimer = null;
-                _flashingIndices.Clear();
             }
-            catch { /* ignore */ }
-
             // restore materials
             // Prefer restoring based on current logical state so Reset and VM updates cannot be overridden
-            foreach (var kvp in _originalMaterials.Keys.ToList())
-            {
-                try
-                {
-                    // determine finalState material based on current logical state (on->lit, off->default)
-                    var finalState = _offTransparentMaterial;
-                    if (_viewModel?.CellsByIndex != null && _viewModel.CellsByIndex.TryGetValue(kvp, out var cell))
-                    {
-                        finalState = cell.IsOn ? _litMaterial : _offTransparentMaterial;
-                    }
-
-                    if (_cubesByIndex.TryGetValue(kvp, out var model3D))
-                    {
-                        model3D.Material = finalState;
-                    }
-                }
-                catch { /* Ignore errors */ }
-            }
-            _originalMaterials.Clear();
+            SetCubState(false);
         }
 
         // Add this method inside the MainWindow class

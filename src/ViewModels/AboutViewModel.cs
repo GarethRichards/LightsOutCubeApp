@@ -8,8 +8,8 @@ namespace LightsOutCube.ViewModels
 {
     public class AboutViewModel
     {
-        public ObservableCollection<SpeedRunEntryWrapper> SpeedRuns { get; } = new ObservableCollection<SpeedRunEntryWrapper>();
-        public ObservableCollection<HighScoreEntry> HighScores { get; } = new ObservableCollection<HighScoreEntry>();
+        public ObservableCollection<SpeedRunEntryWrapper> SpeedRuns { get; } = [];
+        public ObservableCollection<HighScoreEntry> HighScores { get; } = [];
         string _version = "";
         public string Version
         {
@@ -20,14 +20,14 @@ namespace LightsOutCube.ViewModels
                 
                 try
                 {
-                    var asm = System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly();
+                    var asm = Assembly.GetEntryAssembly() ??  Assembly.GetExecutingAssembly();
                     string version = null;
-                    var infoAttr = asm.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>();
+                    var infoAttr = asm.GetCustomAttribute< AssemblyInformationalVersionAttribute>();
                     if (infoAttr != null && !string.IsNullOrWhiteSpace(infoAttr.InformationalVersion))
                         version = infoAttr.InformationalVersion;
                     if (string.IsNullOrEmpty(version))
                     {
-                        var fileAttr = asm.GetCustomAttribute<System.Reflection.AssemblyFileVersionAttribute>();
+                        var fileAttr = asm.GetCustomAttribute< AssemblyFileVersionAttribute>();
                         if (fileAttr != null && !string.IsNullOrWhiteSpace(fileAttr.Version))
                             version = fileAttr.Version;
                     }

@@ -7,7 +7,7 @@ namespace LightsOutCube.Model
 {
     internal class PuzzleModel
     {
-        readonly XmlDocument puzzles = new XmlDocument();
+        readonly XmlDocument puzzles = new();
         public XmlDocument Puzzles => puzzles;
 
         private long state;

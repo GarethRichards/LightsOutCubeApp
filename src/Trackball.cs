@@ -34,10 +34,10 @@ namespace _3DTools
     {
         private FrameworkElement _eventSource;
         private Point _previousPosition2D;
-        private Vector3D _previousPosition3D = new Vector3D(0, 0, 1);
+        private Vector3D _previousPosition3D = new(0, 0, 1);
 
-        private readonly ScaleTransform3D _scale = new ScaleTransform3D();
-        private readonly AxisAngleRotation3D _rotation = new AxisAngleRotation3D();
+        private readonly ScaleTransform3D _scale = new();
+        private readonly AxisAngleRotation3D _rotation = new();
 
         // tracking state to avoid using stale positions if capture is lost
         private bool _isTracking = false;

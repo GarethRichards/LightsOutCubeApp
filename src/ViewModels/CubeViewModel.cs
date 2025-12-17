@@ -72,7 +72,7 @@ namespace LightsOutCube.ViewModels
             {
                 if (stream == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("Puzzle.xml resource not found in any location.");
+                    Debug.WriteLine("Puzzle.xml resource not found in any location.");
                 }
                 else
                 {
@@ -102,7 +102,7 @@ namespace LightsOutCube.ViewModels
             // available lit colors
             LitBrushes = new ObservableCollection<SolidColorBrush>
             {
-                new SolidColorBrush(Colors.Yellow),
+                new(Colors.Yellow),
                 new SolidColorBrush(Colors.Orange),
                 new SolidColorBrush(Colors.Red),
                 new SolidColorBrush(Colors.LimeGreen),
@@ -314,7 +314,14 @@ namespace LightsOutCube.ViewModels
             PressCount++;
 
             _puzzleModel.Toggle(buttonIndex);
+            _solutionMask ^= 1L << buttonIndex; 
             SetCube();
+        }
+
+        public bool InSolution(int index)
+        {     
+            long mask = 1L << index;
+            return (SolutionMask & mask) != 0;
         }
 
         // Cells exposed to the View (no WPF visual types here)

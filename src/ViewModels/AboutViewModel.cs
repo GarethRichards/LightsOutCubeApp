@@ -20,14 +20,14 @@ namespace LightsOutCube.ViewModels
                 
                 try
                 {
-                    var asm = Assembly.GetEntryAssembly() ??  Assembly.GetExecutingAssembly();
+                    var asm = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
                     string version = null;
-                    var infoAttr = asm.GetCustomAttribute< AssemblyInformationalVersionAttribute>();
+                    var infoAttr = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
                     if (infoAttr != null && !string.IsNullOrWhiteSpace(infoAttr.InformationalVersion))
                         version = infoAttr.InformationalVersion;
                     if (string.IsNullOrEmpty(version))
                     {
-                        var fileAttr = asm.GetCustomAttribute< AssemblyFileVersionAttribute>();
+                        var fileAttr = asm.GetCustomAttribute<AssemblyFileVersionAttribute>();
                         if (fileAttr != null && !string.IsNullOrWhiteSpace(fileAttr.Version))
                             version = fileAttr.Version;
                     }

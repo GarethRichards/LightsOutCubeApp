@@ -495,9 +495,9 @@ namespace LightsOutCube
 
         private void StopSolutionTimerIfNoFlashing()
         {
-            if (_viewModel.SolutionMask == 0L && _solutionTimer!=null)
+            if (_viewModel.SolutionMask == 0L && _solutionTimer != null)
             {
-                try { _solutionTimer?.Stop(); } catch { /* Ignore errors */ }
+                try { _solutionTimer.Stop(); } catch { /* Ignore errors */ }
                 _solutionTimer = null;
             }
         }
@@ -739,13 +739,13 @@ namespace LightsOutCube
             {
                 try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
                 _solutionTimer = null; 
-                _solutionLit=false;
+                _solutionLit = false;
             }
         }
 
         private void SetCubState(bool solutionLit)
         {
-            foreach (var idx in _cubes.Select(x => x.Value).Where(x => x > 0))
+            foreach (var idx in _cubes.Where(x => x.Value > 0).Select(x => x.Value))
             {
                 if (!_cubesByIndex.TryGetValue(idx, out var m3d) || m3d == null) continue;
                 if (solutionLit && _viewModel.InSolution(idx))
@@ -764,7 +764,7 @@ namespace LightsOutCube
         {
             if (_solutionTimer != null)
             {
-                try { _solutionTimer?.Stop(); } catch { /* ignore error */}
+                try { _solutionTimer.Stop(); } catch { /* ignore error */}
                 _solutionTimer = null;
             }
             // restore materials

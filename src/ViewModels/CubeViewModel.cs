@@ -319,7 +319,7 @@ namespace LightsOutCube.ViewModels
         }
 
         public bool InSolution(int index)
-        {     
+        {
             long mask = 1L << index;
             return (SolutionMask & mask) != 0;
         }

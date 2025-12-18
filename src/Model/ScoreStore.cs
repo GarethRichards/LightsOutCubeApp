@@ -15,7 +15,7 @@ namespace LightsOutCube.Model
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LightsOutCube");
         private static readonly string FilePath = Path.Combine(DirectoryPath, "scores.json");
         private static readonly string SpeedRunFilePath = Path.Combine(DirectoryPath, "speedrun.json");
-        private static readonly object Sync = new object();
+        private static readonly object Sync = new();
 
         // --- per-puzzle best scores (existing) ---
         public static IList<ScoreRecord> LoadAll()
@@ -255,7 +255,7 @@ namespace LightsOutCube.Model
             lock (Sync)
             {
                 if (!File.Exists(SpeedRunFilePath))
-                    return new List<SpeedRunSummary>();
+                    return [];
 
                 // Try new container format first
                 try

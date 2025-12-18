@@ -40,7 +40,7 @@ jobs:
       - name: Show generated version from built assembly
         shell: pwsh
         run: |
-          $exe = Join-Path $PWD 'src\bin\Release\net48\LightsOutCube.exe'
+          $exe = Join-Path $PWD 'src\bin\Release\net10.0-windows\LightsOutCube.exe'
           if (Test-Path $exe) {
               $vi = (Get-Item $exe).VersionInfo
               Write-Host "Assembly file path: $exe"

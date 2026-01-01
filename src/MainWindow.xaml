@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LightsOutCube"
         xmlns:mv="clr-namespace:LightsOutCube.ViewModels"
-        xmlns:conv="clr-namespace:LightsOutCube.Converters" 
+        xmlns:conv="clr-namespace:LightsOutCube.Converters"
+        xmlns:controls="clr-namespace:LightsOutCube.Controls"
         d:DataContext="{d:DesignInstance Type=mv:CubeViewModel}"
         mc:Ignorable="d"
         Loaded="OnLoaded"
@@ -23,20 +24,7 @@
     </Window.Resources>
     <DockPanel>
         <Grid Name="MainGrid">
-            <!-- Viewport3D (unchanged) -->
             <Viewport3D Name="CubeViewport" Focusable="True" IsHitTestVisible="True" ClipToBounds="True" Grid.Column="0" Grid.Row="0">
-                <Viewport3D.Width>
-                    <MultiBinding Converter="{StaticResource MinValueConverter}">
-                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
-                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
-                    </MultiBinding>
-                </Viewport3D.Width>
-                <Viewport3D.Height>
-                    <MultiBinding Converter="{StaticResource MinValueConverter}">
-                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
-                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
-                    </MultiBinding>
-                </Viewport3D.Height>
                 <Viewport3D.Camera>
                     <PerspectiveCamera x:Name="CubeCamera" Position="0,0,-8" UpDirection="0,1,0" LookDirection="0,0,1" FieldOfView="45" NearPlaneDistance="0.125"/>
                 </Viewport3D.Camera>
@@ -54,51 +42,24 @@
                         <Transform3DGroup x:Name="myTransformGroup" />
                     </ModelVisual3D.Transform>
 
-                    <ModelVisual3D x:Name="mvModel">
-                        <ModelVisual3D.Children>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide01}" Material="{StaticResource Side1Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide02}" Material="{StaticResource Side2Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide03}" Material="{StaticResource Side3Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide04}" Material="{StaticResource Side4Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide05}" Material="{StaticResource Side5Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
-                            <ModelVisual3D>
-                                <ModelVisual3D.Content>
-                                    <GeometryModel3D Geometry="{StaticResource CubeSide06}" Material="{StaticResource Side6Material}"/>
-                                </ModelVisual3D.Content>
-                            </ModelVisual3D>
+                    <ModelVisual3D.Children>
+                        <ModelVisual3D x:Name="mvModel">
+                            <ModelVisual3D.Content>
+                                <StaticResource ResourceKey="CubeModelGroup" />
+                            </ModelVisual3D.Content>
                             <ModelVisual3D>
                                 <ModelVisual3D.Content>
                                     <GeometryModel3D x:Name="myCube" Geometry="{StaticResource myCube}"  Material="{StaticResource TransparentMaterial}"/>
-                                </ModelVisual3D.Content>
+                            </ModelVisual3D.Content>
                             </ModelVisual3D>
-                        </ModelVisual3D.Children>
-
-                        <ModelVisual3D.Transform>
-                            <Transform3DGroup>
-                                <ScaleTransform3D ScaleX="{Binding CubeSize}" ScaleY="{Binding CubeSize}" ScaleZ="{Binding CubeSize}" />
-                            </Transform3DGroup>
-                        </ModelVisual3D.Transform>
-                    </ModelVisual3D>
+                            <ModelVisual3D.Transform>
+                                <Transform3DGroup>
+                                    <ScaleTransform3D ScaleX="{Binding CubeSize}" ScaleY="{Binding CubeSize}" ScaleZ="{Binding CubeSize}" />
+                                </Transform3DGroup>
+                            </ModelVisual3D.Transform>
+                       
+                        </ModelVisual3D>
+                    </ModelVisual3D.Children>
                 </ModelVisual3D>
             </Viewport3D>
 
@@ -133,22 +94,25 @@
                       HorizontalAlignment="Left"
                       VerticalAlignment="Bottom"
                       Margin="12"
-                      IsExpanded="False"
+                      IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
                       ExpandDirection="Right"
-                      Background="Transparent">
+                      Background="Transparent"
+                      Opacity=".75">
                 <Expander.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding SelectedPuzzle, Converter={StaticResource PuzzleIdToDisplayConverter}}" FontSize="14" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <TextBlock Width="60" Text="{Binding SelectedPuzzle, Converter={StaticResource PuzzleIdToDisplayConverter}}" FontSize="14" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
                     </StackPanel>
                 </Expander.Header>
                 <Border Name="ExpandedSection"
-                    Background="#22000000"
                     CornerRadius="10"
                     Padding="0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Margin="1"
                     IsHitTestVisible="True">
+                    <Border.Background>
+                        <StaticResource ResourceKey="Gradient_DuskGlow"/>
+                    </Border.Background>
                     <StackPanel Orientation="Horizontal" Background="Transparent" IsHitTestVisible="True" 
                             Margin="8">
 
@@ -184,7 +148,7 @@
                         <Button x:Name="ResetButtonOverlay" Command="{Binding ResetCommand}" Content="Reset" 
                             Margin="0,0,8,0" Width="60" 
                             Background="Transparent" BorderBrush="White" 
-                            Foreground="Black" Opacity="0.7"
+                            Foreground="White" Opacity="0.9"
                             Height="26"
                             Style="{StaticResource RoundedButtonStyle}"
                             ToolTip="Reset puzzle" />
@@ -201,8 +165,8 @@
                             Background="Transparent"
                             BorderBrush="White"
                             BorderThickness="1"
-                            Foreground="Black"
-                            Opacity="0.7"
+                            Foreground="White"
+                            Opacity="0.9"
                             ToolTip="Show solution" />
 
                         <Button x:Name="AboutButton" Content="About" Width="60" Margin="0" 
@@ -210,7 +174,7 @@
                             Height ="26"
                             Style="{StaticResource RoundedButtonStyle}"
                             Background="Transparent" BorderBrush="White" 
-                            BorderThickness="1" Foreground="Black" Opacity="0.7"/>
+                            BorderThickness="1" Foreground="White" Opacity="0.9"/>
                 </StackPanel>
                 </Border>
             </Expander>
@@ -258,7 +222,8 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Padding="18"
-                    IsHitTestVisible="False">
+                    IsHitTestVisible="False"
+                    >
                 <StackPanel HorizontalAlignment="Center">
                     <TextBlock Text="LightsOut Cube"
                                FontSize="28"
@@ -285,6 +250,8 @@
                                HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
+
+            <controls:CelebrationView x:Name="CelebrationControl" Visibility="Collapsed" />
         </Grid>
     </DockPanel>
 </Window>

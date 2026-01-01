@@ -76,12 +76,11 @@ namespace LightsOutCube.Model
         /// <summary>
         /// Returns the best (fastest) record for the given puzzle id, or null when none exists.
         /// </summary>
-        public static ScoreRecord GetBestRecord(string puzzleId)
+        public static ScoreRecord GetBestRecord(int puzzleId)
         {
-            if (string.IsNullOrEmpty(puzzleId)) return null;
             var list = LoadAll();
             return list
-                .Where(r => string.Equals(r.PuzzleId, puzzleId, StringComparison.OrdinalIgnoreCase))
+                .Where(r => r.PuzzleId == puzzleId)
                 .OrderBy(r => r.Duration)
                 .FirstOrDefault();
         }
@@ -93,13 +92,11 @@ namespace LightsOutCube.Model
         public static bool AddIfBest(ScoreRecord record)
         {
             if (record == null) return false;
-            if (string.IsNullOrEmpty(record.PuzzleId))
-                record.PuzzleId = "unknown";
 
             lock (Sync)
             {
                 var list = LoadAll().ToList();
-                var existing = list.FirstOrDefault(r => string.Equals(r.PuzzleId, record.PuzzleId, StringComparison.OrdinalIgnoreCase));
+                var existing = list.FirstOrDefault(r => r.PuzzleId == record.PuzzleId);
 
                 if (existing == null)
                 {
@@ -305,7 +302,7 @@ namespace LightsOutCube.Model
         [DataMember] public DateTimeOffset Timestamp { get; set; }
 
         /// <summary>Identifier of the last puzzle solved in the run (string for flexibility).</summary>
-        [DataMember] public string LastPuzzleSolved { get; set; }
+        [DataMember] public int LastPuzzleSolved { get; set; }
 
         /// <summary>List of per-puzzle solve times in milliseconds, in the order puzzles were solved.</summary>
         [DataMember] public List<long> TimesMs { get; set; } = new List<long>();

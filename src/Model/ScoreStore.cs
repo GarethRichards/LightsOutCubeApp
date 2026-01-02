@@ -23,20 +23,18 @@ namespace LightsOutCube.Model
             lock (Sync)
             {
                 if (!File.Exists(FilePath))
-                    return new List<ScoreRecord>();
+                    return [];
 
-                using (var stream = File.OpenRead(FilePath))
+                using var stream = File.OpenRead(FilePath);
+                var ser = new DataContractJsonSerializer(typeof(List<ScoreRecord>));
+                try
                 {
-                    var ser = new DataContractJsonSerializer(typeof(List<ScoreRecord>));
-                    try
-                    {
-                        return (List<ScoreRecord>)ser.ReadObject(stream) ?? new List<ScoreRecord>();
-                    }
-                    catch
-                    {
-                        // Corrupt file — replace with empty list
-                        return new List<ScoreRecord>();
-                    }
+                    return (List<ScoreRecord>)ser.ReadObject(stream) ?? new List<ScoreRecord>();
+                }
+                catch
+                {
+                    // Corrupt file — replace with empty list
+                    return [];
                 }
             }
         }
@@ -65,23 +63,20 @@ namespace LightsOutCube.Model
             lock (Sync)
             {
                 Directory.CreateDirectory(DirectoryPath);
-                using (var stream = File.Create(FilePath))
-                {
-                    var ser = new DataContractJsonSerializer(typeof(List<ScoreRecord>));
-                    ser.WriteObject(stream, list);
-                }
+                using var stream = File.Create(FilePath);
+                var ser = new DataContractJsonSerializer(typeof(List<ScoreRecord>));
+                ser.WriteObject(stream, list);
             }
         }
 
         /// <summary>
         /// Returns the best (fastest) record for the given puzzle id, or null when none exists.
         /// </summary>
-        public static ScoreRecord GetBestRecord(string puzzleId)
+        public static ScoreRecord GetBestRecord(int puzzleId)
         {
-            if (string.IsNullOrEmpty(puzzleId)) return null;
             var list = LoadAll();
             return list
-                .Where(r => string.Equals(r.PuzzleId, puzzleId, StringComparison.OrdinalIgnoreCase))
+                .Where(r => r.PuzzleId == puzzleId)
                 .OrderBy(r => r.Duration)
                 .FirstOrDefault();
         }
@@ -93,13 +88,11 @@ namespace LightsOutCube.Model
         public static bool AddIfBest(ScoreRecord record)
         {
             if (record == null) return false;
-            if (string.IsNullOrEmpty(record.PuzzleId))
-                record.PuzzleId = "unknown";
 
             lock (Sync)
             {
                 var list = LoadAll().ToList();
-                var existing = list.FirstOrDefault(r => string.Equals(r.PuzzleId, record.PuzzleId, StringComparison.OrdinalIgnoreCase));
+                var existing = list.FirstOrDefault(r => r.PuzzleId == record.PuzzleId);
 
                 if (existing == null)
                 {
@@ -143,11 +136,9 @@ namespace LightsOutCube.Model
                     {
                         try
                         {
-                            using (var inStream = File.OpenRead(SpeedRunFilePath))
-                            {
-                                var reader = new DataContractJsonSerializer(typeof(ScoreStats));
-                                stats = (ScoreStats)reader.ReadObject(inStream);
-                            }
+                            using var inStream = File.OpenRead(SpeedRunFilePath);
+                            var reader = new DataContractJsonSerializer(typeof(ScoreStats));
+                            stats = (ScoreStats)reader.ReadObject(inStream);
                         }
                         catch
                         {
@@ -155,15 +146,13 @@ namespace LightsOutCube.Model
                             // read it and convert to ScoreStats.
                             try
                             {
-                                using (var inStream = File.OpenRead(SpeedRunFilePath))
+                                using var inStream = File.OpenRead(SpeedRunFilePath);
+                                var readerSingle = new DataContractJsonSerializer(typeof(SpeedRunSummary));
+                                var single = (SpeedRunSummary)readerSingle.ReadObject(inStream);
+                                if (single != null)
                                 {
-                                    var readerSingle = new DataContractJsonSerializer(typeof(SpeedRunSummary));
-                                    var single = (SpeedRunSummary)readerSingle.ReadObject(inStream);
-                                    if (single != null)
-                                    {
-                                        stats = new ScoreStats();
-                                        stats.SpeedRuns.Add(single);
-                                    }
+                                    stats = new ScoreStats();
+                                    stats.SpeedRuns.Add(single);
                                 }
                             }
                             catch
@@ -178,11 +167,9 @@ namespace LightsOutCube.Model
 
                     stats.SpeedRuns.Add(summary);
 
-                    using (var outStream = File.Create(SpeedRunFilePath))
-                    {
-                        var writer = new DataContractJsonSerializer(typeof(ScoreStats));
-                        writer.WriteObject(outStream, stats);
-                    }
+                    using var outStream = File.Create(SpeedRunFilePath);
+                    var writer = new DataContractJsonSerializer(typeof(ScoreStats));
+                    writer.WriteObject(outStream, stats);
                 }
                 catch
                 {
@@ -204,13 +191,11 @@ namespace LightsOutCube.Model
                 try
                 {
                     // Prefer the new ScoreStats container format
-                    using (var stream = File.OpenRead(SpeedRunFilePath))
-                    {
-                        var ser = new DataContractJsonSerializer(typeof(ScoreStats));
-                        var stats = (ScoreStats)ser.ReadObject(stream);
-                        if (stats?.SpeedRuns != null && stats.SpeedRuns.Count > 0)
-                            return stats.SpeedRuns.Last();
-                    }
+                    using var stream = File.OpenRead(SpeedRunFilePath);
+                    var ser = new DataContractJsonSerializer(typeof(ScoreStats));
+                    var stats = (ScoreStats)ser.ReadObject(stream);
+                    if (stats?.SpeedRuns != null && stats.SpeedRuns.Count > 0)
+                        return stats.SpeedRuns.Last();
                 }
                 catch
                 {
@@ -220,11 +205,9 @@ namespace LightsOutCube.Model
                 // Fallback: older files may have contained a single SpeedRunSummary
                 try
                 {
-                    using (var stream = File.OpenRead(SpeedRunFilePath))
-                    {
-                        var ser = new DataContractJsonSerializer(typeof(SpeedRunSummary));
-                        return (SpeedRunSummary)ser.ReadObject(stream);
-                    }
+                    using var stream = File.OpenRead(SpeedRunFilePath);
+                    var ser = new DataContractJsonSerializer(typeof(SpeedRunSummary));
+                    return (SpeedRunSummary)ser.ReadObject(stream);
                 }
                 catch
                 {
@@ -260,13 +243,11 @@ namespace LightsOutCube.Model
                 // Try new container format first
                 try
                 {
-                    using (var stream = File.OpenRead(SpeedRunFilePath))
-                    {
-                        var ser = new DataContractJsonSerializer(typeof(ScoreStats));
-                        var stats = (ScoreStats)ser.ReadObject(stream);
-                        if (stats?.SpeedRuns != null)
+                    using var stream = File.OpenRead(SpeedRunFilePath);
+                    var ser = new DataContractJsonSerializer(typeof(ScoreStats));
+                    var stats = (ScoreStats)ser.ReadObject(stream);
+                    if (stats?.SpeedRuns != null)
                             return stats.SpeedRuns;
-                    }
                 }
                 catch
                 {
@@ -276,20 +257,18 @@ namespace LightsOutCube.Model
                 // Fallback: older files may have contained a single SpeedRunSummary
                 try
                 {
-                    using (var stream = File.OpenRead(SpeedRunFilePath))
-                    {
-                        var ser = new DataContractJsonSerializer(typeof(SpeedRunSummary));
-                        var single = (SpeedRunSummary)ser.ReadObject(stream);
-                        if (single != null)
-                            return new List<SpeedRunSummary> { single };
-                    }
+                    using var stream = File.OpenRead(SpeedRunFilePath);
+                    var ser = new DataContractJsonSerializer(typeof(SpeedRunSummary));
+                    var single = (SpeedRunSummary)ser.ReadObject(stream);
+                    if (single != null)
+                        return [single];
                 }
                 catch
                 {
                     // treat as none
                 }
 
-                return new List<SpeedRunSummary>();
+                return [];
             }
         }
     }
@@ -305,7 +284,7 @@ namespace LightsOutCube.Model
         [DataMember] public DateTimeOffset Timestamp { get; set; }
 
         /// <summary>Identifier of the last puzzle solved in the run (string for flexibility).</summary>
-        [DataMember] public string LastPuzzleSolved { get; set; }
+        [DataMember] public int LastPuzzleSolved { get; set; }
 
         /// <summary>List of per-puzzle solve times in milliseconds, in the order puzzles were solved.</summary>
         [DataMember] public List<long> TimesMs { get; set; } = new List<long>();

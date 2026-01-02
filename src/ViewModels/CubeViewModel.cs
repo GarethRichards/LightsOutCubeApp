@@ -18,9 +18,9 @@ namespace LightsOutCube.ViewModels
     {
         private const int SpeedRunPuzzleId = 0; // sentinel id selected in the drop-down to start a speed run
 
-        private readonly PuzzleModel _puzzleModel = new PuzzleModel();
-        private readonly Stopwatch _solveTimer = new Stopwatch();
-        private readonly Stopwatch _speedRunStopwatch = new Stopwatch();
+        private readonly PuzzleModel _puzzleModel = new();
+        private readonly Stopwatch _solveTimer = new();
+        private readonly Stopwatch _speedRunStopwatch = new();
 
         // UI timer to update elapsed display
         private readonly DispatcherTimer _uiTimer;
@@ -33,7 +33,10 @@ namespace LightsOutCube.ViewModels
             private set => SetProperty(ref _isSpeedRunMode, value);
         }
 
-        private readonly List<ScoreRecord> _speedRunRecords = new List<ScoreRecord>();
+        // Event raised when a speed run completes (subscribers can show celebration UI)
+        public event EventHandler<SpeedRunSummary> SpeedRunCompleted;
+
+        private readonly List<ScoreRecord> _speedRunRecords = [];
         public IReadOnlyList<ScoreRecord> SpeedRunRecords => _speedRunRecords.AsReadOnly();
 
         private int _speedRunSolvedCount;
@@ -65,8 +68,8 @@ namespace LightsOutCube.ViewModels
                 Dispatcher.CurrentDispatcher);
 
             // Load puzzles into the ViewModel
-            Cells = new ObservableCollection<CellViewModel>();
-            CellsByIndex = new Dictionary<int, CellViewModel>();
+            Cells = [];
+            CellsByIndex = [];
 
             using (var stream = OpenPuzzleStream())
             {
@@ -80,7 +83,7 @@ namespace LightsOutCube.ViewModels
                 }
             }
 
-            PuzzleList = new ObservableCollection<int>();
+            PuzzleList = [];
             var n = _puzzleModel.Puzzles.FirstChild;
             for (int i = 0; i < n.ChildNodes.Count; i++)
                 PuzzleList.Add(i + 1);
@@ -103,11 +106,11 @@ namespace LightsOutCube.ViewModels
             LitBrushes = new ObservableCollection<SolidColorBrush>
             {
                 new(Colors.Yellow),
-                new SolidColorBrush(Colors.Orange),
-                new SolidColorBrush(Colors.Red),
-                new SolidColorBrush(Colors.LimeGreen),
-                new SolidColorBrush(Colors.Cyan),
-                new SolidColorBrush(Colors.Magenta)
+                new(Colors.Orange),
+                new(Colors.Red),
+                new(Colors.LimeGreen),
+                new(Colors.Cyan),
+                new(Colors.Magenta)
             };
             SelectedLitBrush = LitBrushes[0];
 
@@ -244,8 +247,12 @@ namespace LightsOutCube.ViewModels
                                         // if we are in speed-run mode collect the per-puzzle record and continue/finish run
             if (IsSpeedRunMode)
             {
-                if (rec != null)
-                    _speedRunRecords.Add(rec);
+                if (rec == null)
+                {
+                    EndSpeedRun();
+                    return;
+                }
+                _speedRunRecords.Add(rec);
 
                 SpeedRunSolvedCount++;
                 // advance to next puzzle if available, otherwise end speed run
@@ -292,13 +299,12 @@ namespace LightsOutCube.ViewModels
             // If puzzle is solved, hide solution highlights (View will react to this property change)
             if (Solved)
             {
-                ShowSolution = false;
-
                 // call solved handling only once when the puzzle becomes solved
                 if (!previouslySolved)
                 {
                     CubePuzzleSolved();
                 }
+                ShowSolution = false;
             }
             else
             {
@@ -358,6 +364,12 @@ namespace LightsOutCube.ViewModels
                 cell.IsOn = (_puzzleModel.State & mask) != 0;
             }
         }
+        private bool _isExpanded = false;
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set => SetProperty(ref _isExpanded, value);
+        }
 
         private int _selectedPuzzle;
         public int SelectedPuzzle
@@ -365,6 +377,7 @@ namespace LightsOutCube.ViewModels
             get => _selectedPuzzle;
             set
             {
+                IsExpanded = false;
                 // if user selects the Speed Run sentinel, start the mode
                 if (value == SpeedRunPuzzleId && !_isSpeedRunMode)
                 {
@@ -425,11 +438,12 @@ namespace LightsOutCube.ViewModels
             // Optionally: persist a summary, surface UI notification or expose SpeedRunRecords to other components.
             // For now, callers can read SpeedRunSolvedCount, SpeedRunElapsed and SpeedRunRecords.
             // Persist last speed run summary (last puzzle solved + per-puzzle times)
+            SpeedRunSummary summary = null;
             try
             {
                 if (_speedRunRecords.Count > 0)
                 {
-                    var summary = new SpeedRunSummary
+                    summary = new SpeedRunSummary
                     {
                         Timestamp = DateTimeOffset.UtcNow,
                         LastPuzzleSolved = _speedRunRecords[_speedRunRecords.Count-1].PuzzleId,
@@ -446,6 +460,19 @@ namespace LightsOutCube.ViewModels
             catch
             {
                 // best-effort persistence; swallow errors
+            }
+            finally
+            {
+                // Notify listeners that the speed run has ended. If any puzzles were solved, summary describes the run; otherwise it may be null.
+                try
+                {
+                    SpeedRunCompleted?.Invoke(this, summary);
+                }
+                catch (Exception ex)
+                {
+                    // Swallow UI event errors to avoid impacting core logic, but log them for diagnostics.
+                    Debug.WriteLine($"Error in SpeedRunCompleted event handler: {ex}");
+                }
             }
         }
 
@@ -596,6 +623,8 @@ namespace LightsOutCube.ViewModels
             {
                 _solveTimer.Stop();
                 var elapsed = _solveTimer.Elapsed;
+                if (ShowSolution ||  elapsed == TimeSpan.Zero)
+                    return null;
                 int presses = this.PressCount; // already tracked in your VM
                 // Determine perfect: prefer comparing to minimal moves if solver exposes it:
                 bool isPerfect = false;
@@ -608,7 +637,7 @@ namespace LightsOutCube.ViewModels
                     Duration = elapsed,
                     PressCount = presses,
                     IsPerfect = isPerfect,
-                    PuzzleId = this.SelectedPuzzle.ToString(),
+                    PuzzleId = this.SelectedPuzzle,
                     AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString()
                 };
 

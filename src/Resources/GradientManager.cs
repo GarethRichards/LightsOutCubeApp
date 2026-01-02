@@ -57,8 +57,9 @@ namespace LightsOutCube.Resources
         {
             try
             {
-                var dict = dictionary ??
-                    (Application.Current.Resources["MergedGradients"] as ResourceDictionary).MergedDictionaries[0];
+                // Gradients are merged into Application resources (via App.xaml). If a dictionary
+                // isn't provided, use Application.Current.Resources directly.
+                var dict = dictionary ?? Application.Current.Resources;
                 var brush = PickRandomGradient(dict);
                 if (brush == null)
                     return;

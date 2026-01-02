@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using LightsOutCube.Model;
 using System.Reflection;
+using System.ComponentModel;
 
 namespace LightsOutCube.ViewModels
 {
@@ -46,16 +47,19 @@ namespace LightsOutCube.ViewModels
         public void Refresh()
         {
             SpeedRuns.Clear();
-
             var runs = ScoreStore.LoadAllSpeedRuns() ?? Enumerable.Empty<SpeedRunSummary>();
-            foreach (var run in runs.OrderByDescending(r => r.Timestamp))
+            var ordered = runs.OrderByDescending(r => r.SolvedCount).ThenBy(r => r.TotalElapsedMs).ToList();
+            int rank = 1;
+            for (int idx = 0; idx < ordered.Count; idx++)
             {
-                var times = run.TimesMs?.ToList() ?? new System.Collections.Generic.List<long>();
-                var pressCounts = run.PressCounts ?? new System.Collections.Generic.List<int>();
-                var perfects = run.IsPerfect ?? new System.Collections.Generic.List<bool>();
+                var run = ordered[idx];
+                var times = run.TimesMs?.ToList() ?? [];
+                var pressCounts = run.PressCounts ?? [];
+                var perfects = run.IsPerfect ?? [];
 
                 var wrapper = new SpeedRunEntryWrapper
                 {
+                    Rank = rank++,
                     SolvedCount = run.SolvedCount,
                     TotalTime = FormatDuration(TimeSpan.FromMilliseconds(run.TotalElapsedMs)),
                     LastPuzzle = run.LastPuzzleSolved,
@@ -88,7 +92,6 @@ namespace LightsOutCube.ViewModels
                         PerfectText = isPerf ? "Yes" : "No"
                     });
                 }
-
                 SpeedRuns.Add(wrapper);
             }
         }
@@ -98,11 +101,11 @@ namespace LightsOutCube.ViewModels
             HighScores.Clear();
 
             var records = ScoreStore.LoadAll() ?? Enumerable.Empty<ScoreRecord>();
-            foreach (var rec in records.OrderByDescending(r => r.Timestamp))
+            foreach (var rec in records.OrderByDescending(r => r.PuzzleId))
             {
                 HighScores.Add(new HighScoreEntry
                 {
-                    Puzzle = rec.PuzzleId ?? string.Empty,
+                    Puzzle = rec.PuzzleId,
                     Time = FormatDuration(rec.Duration),
                     PressCount = rec.PressCount,
                     PerfectText = rec.IsPerfect ? "Yes" : "No",
@@ -120,13 +123,27 @@ namespace LightsOutCube.ViewModels
         }
     }
 
-    public class SpeedRunEntryWrapper
+    public class SpeedRunEntryWrapper : INotifyPropertyChanged
     {
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        public int Rank { get; set; }
         public int SolvedCount { get; set; }
         public string TotalTime { get; set; }
-        public string LastPuzzle { get; set; }
+        public int LastPuzzle { get; set; }
         public string Timestamp { get; set; }
-        public System.Collections.Generic.List<PuzzleTimeEntry> PuzzleTimes { get; set; } = new System.Collections.Generic.List<PuzzleTimeEntry>();
+        // When true this run is highlighted (used by Celebration UI)
+        private bool _isLatest;
+        public bool IsLatest
+        {
+            get => _isLatest;
+            set
+            {
+                if (_isLatest == value) return;
+                _isLatest = value;
+                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsLatest)));
+            }
+        }
+        public System.Collections.Generic.List<PuzzleTimeEntry> PuzzleTimes { get; set; } = [];
     }
 
     public class PuzzleTimeEntry
@@ -141,7 +158,7 @@ namespace LightsOutCube.ViewModels
 
     public class HighScoreEntry
     {
-        public string Puzzle { get; set; }
+        public int Puzzle { get; set; }
         public string Time { get; set; }
         public int PressCount { get; set; }
         public string PerfectText { get; set; }

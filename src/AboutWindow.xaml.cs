@@ -5,14 +5,17 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
 using System.Windows.Navigation;
-using LightsOutCube.Model;
 using LightsOutCube.ViewModels;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace LightsOutCube
 {
     public partial class AboutWindow : Window
     {
         private readonly AboutViewModel _vm;
+        private GridViewColumnHeader _lastHeader;
+        private ListSortDirection _lastDirection = ListSortDirection.Ascending;
 
         public AboutWindow()
         {
@@ -21,7 +24,6 @@ namespace LightsOutCube
             DataContext = _vm;
         }
 
-        // Other existing event handlers should remain unchanged (e.g. Window_Loaded, CloseButton_Click, RefreshSpeedRunsButton_Click)
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -31,6 +33,7 @@ namespace LightsOutCube
                 _vm.RefreshHighScores();
             }
             catch { /* Ignore error */ }
+
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -49,8 +52,51 @@ namespace LightsOutCube
             e.Handled = true;
         }
 
-        // RefreshScoresButton removed - high scores are bound to ViewModel
+        private void GridViewColumnHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(e.OriginalSource is GridViewColumnHeader header) || header.Column == null)
+                return;
 
-        // Speed runs refresh handled by ViewModel; no button handler required.
+            // determine sort property name: prefer Tag, fallback to binding path
+            string sortBy = header.Tag as string;
+            if (string.IsNullOrEmpty(sortBy) && header.Column.DisplayMemberBinding is Binding b && b.Path != null)
+                sortBy = b.Path.Path;
+            
+            if (string.IsNullOrEmpty(sortBy)) return;
+
+            // find the ListView that owns this header
+            var listView = FindAncestor<ListView>(header);
+            if (listView == null) return;
+
+            var view = CollectionViewSource.GetDefaultView(listView.ItemsSource);
+            if (view == null) return;
+
+            // toggle direction if same column clicked twice
+            var direction = ListSortDirection.Ascending;
+            if (_lastHeader == header)
+            {
+                direction = _lastDirection == ListSortDirection.Ascending
+                    ? ListSortDirection.Descending
+                    : ListSortDirection.Ascending;
+            }
+
+            view.SortDescriptions.Clear();
+            view.SortDescriptions.Add(new SortDescription(sortBy, direction));
+            view.Refresh();
+
+            _lastHeader = header;
+            _lastDirection = direction;
+        }
+
+        // small visual-tree helper
+        private static T FindAncestor<T>(DependencyObject current) where T : DependencyObject
+        {
+            while (current != null)
+            {
+                if (current is T t) return t;
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
     }
 }

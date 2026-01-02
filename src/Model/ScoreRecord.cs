@@ -10,7 +10,7 @@ namespace LightsOutCube.Model
         [DataMember] public TimeSpan Duration { get; set; }
         [DataMember] public int PressCount { get; set; }
         [DataMember] public bool IsPerfect { get; set; }
-        [DataMember] public string PuzzleId { get; set; } // optional: seed or file name
+        [DataMember] public int PuzzleId { get; set; } // optional: seed or file name
         [DataMember] public string AppVersion { get; set; } // optional
     }
 }

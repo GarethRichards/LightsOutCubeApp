@@ -1,9 +1,11 @@
 ﻿using _3DTools;
+using LightsOutCube.Model;
 using LightsOutCube.Resources;
 using LightsOutCube.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq; // added for resource key discovery
 using System.Reflection;
 using System.Windows;
@@ -11,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
+using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace LightsOutCube
@@ -64,8 +67,113 @@ namespace LightsOutCube
             // listen to ViewModel property changes for solved notification and puzzle changes
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
 
+            // Subscribe to speed-run completion so we can celebrate when user finishes all puzzles
+            _viewModel.SpeedRunCompleted += ViewModel_SpeedRunCompleted;
+
+#if DEBUG
+            // Debug-only keyboard shortcut (Ctrl+Shift+C) to show the celebration for development/testing
+            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+#endif
+
             // cleanup on unload to avoid leaks
             this.Unloaded += OnUnloaded;
+        }
+
+#if DEBUG
+        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Ctrl+Shift+C triggers the celebration in debug builds only
+            if (e.Key == Key.C && (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) == (ModifierKeys.Control | ModifierKeys.Shift))
+            {
+                try
+                {
+                    // Build a synthetic summary from current state so the CongratulationWindow can display something meaningful
+                    var total = (long)_viewModel.SpeedRunElapsed.TotalMilliseconds;
+                    var solvedCount = _viewModel.PuzzleList.Count(x => x != 0);
+                    var last = _viewModel.SelectedPuzzle;
+                    var summary = new SpeedRunSummary
+                    {
+                        Timestamp = DateTimeOffset.UtcNow,
+                        LastPuzzleSolved = last,
+                        TotalElapsedMs = Math.Max(1, total),
+                        SolvedCount = solvedCount,
+                        TimesMs = _viewModel.SpeedRunRecords?.Select(r => (long)r.Duration.TotalMilliseconds).ToList() ?? new List<long>(),
+                        PressCounts = _viewModel.SpeedRunRecords?.Select(r => r.PressCount).ToList() ?? new List<int>(),
+                        IsPerfect = _viewModel.SpeedRunRecords?.Select(r => r.IsPerfect).ToList() ?? new List<bool>()
+                    };
+
+                    ShowCelebration(summary);
+                }
+                catch { /* best-effort debug helper */ }
+            }
+        }
+#endif
+
+        private void ViewModel_SpeedRunCompleted(object sender, SpeedRunSummary summary)
+        {
+            // celebrate on UI thread
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                try
+                {
+                    // central celebration routine: visual effects, sound, and the non-modal CongratulationWindow
+                    ShowCelebration(summary);
+                }
+                catch { /* best-effort */ }
+            }), DispatcherPriority.Background);
+        }
+
+        // Centralized celebration display (used by speed-run completion and debug shortcut)
+        private void ShowCelebration(SpeedRunSummary summary)
+        {
+            try
+            {
+                // existing visual celebration (banner + cube rotation)
+                try { ShowSolvedEffects(); } catch { /* ignore */ }
+                
+                // Play celebratory audio if available (fall back to startup sound if not)
+                try
+                {
+                    Uri[] candidates =
+                    [
+                        new Uri("pack://application:,,,/Resources/Intro.wav", UriKind.Absolute)
+                    ];
+
+                    System.Windows.Resources.StreamResourceInfo ri = null;
+                    foreach (var u in candidates)
+                    {
+                        try { ri = Application.GetResourceStream(u); } catch { ri = null; }
+                        if (ri != null && ri.Stream != null) break;
+                    }
+
+                    if (ri != null && ri.Stream != null)
+                    {
+                        using Stream resourceStream = ri.Stream;
+                        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "LightsOutCube_Celebrate.wav");
+                        using (var fs = File.Create(tempPath))
+                        {
+                            resourceStream.CopyTo(fs);
+                        }
+                        var mp = new MediaPlayer();
+                        mp.Open(new Uri(tempPath, UriKind.Absolute));
+                        mp.Volume = 0.9;
+                        mp.Play();
+                    }
+                }
+                catch { /* ignore audio errors */ }
+                // celebration UI will be handled by CelebrationView control
+
+                // populate and show celebration via CelebrationView control
+                try
+                {
+                    var aboutVm = new ViewModels.AboutViewModel();
+                    aboutVm.Refresh();
+                    this.CelebrationControl.Show(summary, aboutVm.SpeedRuns);
+                }
+                catch { /* ignore celebration list errors */ }
+
+            }
+            catch { /* swallow */ }
         }
 
         private void StartUpEffect()
@@ -199,14 +307,14 @@ namespace LightsOutCube
                     : _offTransparentMaterial;
 
                 // subscribe to changes and update material on UI thread
-                PropertyChangedEventHandler handler = (s, e) =>
+                void handler(object s, PropertyChangedEventArgs e)
                 {
                     if (e.PropertyName != nameof(cell.IsOn)) return;
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         model3D.Material = cell.IsOn ? _litMaterial : _offTransparentMaterial;
                     });
-                };
+                }
 
                 cell.PropertyChanged += handler;
                 _cellHandlers[index] = handler;

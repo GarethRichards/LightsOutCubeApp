@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using LightsOutCube.Model;
 using LightsOutCube.ViewModels;
 using System.Globalization;
@@ -38,14 +39,7 @@ namespace LightsOutCube.Controls
                         rank = wrapper.Rank;
                     }
                 }
-                if (rank == 1) 
-                {
-                    HighScoreText.Visibility = Visibility.Visible; 
-                }
-                else
-                {
-                    HighScoreText.Visibility = Visibility.Collapsed;
-                }
+                HighScoreText.Visibility = rank == 1 ? Visibility.Visible : Visibility.Collapsed;
                 // ensure UI scrolls to the latest entry
                 try { SpeedRunsList.AnimateLatestVisible(TimeSpan.FromSeconds(5)); } catch { /* Ignore */ }
                 // start confetti and ribbons using centralized Effects helper, routing shapes into CelebrationView
@@ -57,30 +51,26 @@ namespace LightsOutCube.Controls
             catch { /* best-effort */ }
         }
 
-        public void Hide()
-        {
-            Visibility = Visibility.Collapsed;
-        }
 
         // Methods to allow outer code to add/remove visual elements (confetti/ribbons)
         public void AddConfetti(UIElement element)
         {
-            try { Dispatcher.Invoke(() => ConfettiCanvas.Children.Add(element)); } catch { /* best-effort */ }
+            try { Dispatcher.Invoke(() => this.ConfettiCanvas.Children.Add(element)); } catch { /* best-effort */ }
         }
 
         public void RemoveConfetti(UIElement element)
         {
-            try { Dispatcher.Invoke(() => ConfettiCanvas.Children.Remove(element)); } catch { /* best-effort */ }
+            try { Dispatcher.Invoke(() => this.ConfettiCanvas.Children.Remove(element)); } catch { /* best-effort */ }
         }
 
         public void AddRibbon(UIElement element)
         {
-            try { Dispatcher.Invoke(() => RibbonCanvas.Children.Add(element)); } catch { /* best-effort */ }
+            try { Dispatcher.Invoke(() => this.RibbonCanvas.Children.Add(element)); } catch { /* best-effort */ }
         }
 
         void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Hide();
+            Visibility = Visibility.Collapsed;
         }
     }
 }

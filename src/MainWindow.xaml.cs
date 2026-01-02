@@ -136,7 +136,6 @@ namespace LightsOutCube
                 {
                     Uri[] candidates =
                     [
-                        new Uri("pack://application:,,,/Resources/Intro.wav", UriKind.Absolute),
                         new Uri("pack://application:,,,/Resources/Intro.wav", UriKind.Absolute)
                     ];
 
@@ -149,10 +148,11 @@ namespace LightsOutCube
 
                     if (ri != null && ri.Stream != null)
                     {
+                        using Stream resourceStream = ri.Stream;
                         var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "LightsOutCube_Celebrate.wav");
                         using (var fs = File.Create(tempPath))
                         {
-                            ri.Stream.CopyTo(fs);
+                            resourceStream.CopyTo(fs);
                         }
                         var mp = new MediaPlayer();
                         mp.Open(new Uri(tempPath, UriKind.Absolute));

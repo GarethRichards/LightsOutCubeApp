@@ -51,9 +51,10 @@
                             <TextBlock Foreground="White" Text="Version " FontSize="11" Opacity="0.9" Margin="0,0,0,12"/>
                             <TextBlock Foreground="White" Text="{Binding Version}" FontSize="11" Opacity="0.9" Margin="0,0,0,12"/>
                         </StackPanel>
-                        <TextBlock Foreground="White" Text="A WPF 3D Lights Out Cube puzzle." TextWrapping="Wrap" Margin="0,0,0,12"/>
+                        <TextBlock Foreground="White" Text="3D Lights Out Cube puzzle emulator." TextWrapping="Wrap" Margin="0,0,0,12"/>
                         <TextBlock Foreground="White" Text="Written by Gareth Richards." TextWrapping="Wrap" Margin="0,0,0,12"/>
                         <TextBlock Foreground="White" Text="Credits" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                        <TextBlock Foreground="White" Text="• Original puzzle by Tiger Electronics" TextWrapping="Wrap" Margin="0,0,0,2"/>
                         <TextBlock Foreground="White" Text="• Trackball code adapted from 3DTools sample" TextWrapping="Wrap" Margin="0,0,0,2"/>
                         <TextBlock Foreground="White" Text="• Gradient themes and animations by CoPilot" TextWrapping="Wrap" Margin="0,0,0,8"/>
                         <TextBlock Foreground="White" Text="Contact / Repository" FontWeight="SemiBold" Margin="0,8,0,4"/>

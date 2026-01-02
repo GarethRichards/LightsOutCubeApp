@@ -92,9 +92,6 @@ namespace LightsOutCube.ViewModels
                         PerfectText = isPerf ? "Yes" : "No"
                     });
                 }
-
-                // mark latest (newest) run
-                wrapper.IsLatest = (idx == ordered.Count - 1);
                 SpeedRuns.Add(wrapper);
             }
         }
@@ -104,7 +101,7 @@ namespace LightsOutCube.ViewModels
             HighScores.Clear();
 
             var records = ScoreStore.LoadAll() ?? Enumerable.Empty<ScoreRecord>();
-            foreach (var rec in records.OrderByDescending(r => r.Timestamp))
+            foreach (var rec in records.OrderByDescending(r => r.PuzzleId))
             {
                 HighScores.Add(new HighScoreEntry
                 {
@@ -126,7 +123,7 @@ namespace LightsOutCube.ViewModels
         }
     }
 
-    public class SpeedRunEntryWrapper
+    public class SpeedRunEntryWrapper : INotifyPropertyChanged
     {
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         public int Rank { get; set; }

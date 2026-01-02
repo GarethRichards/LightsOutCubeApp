@@ -18,9 +18,9 @@ namespace LightsOutCube.ViewModels
     {
         private const int SpeedRunPuzzleId = 0; // sentinel id selected in the drop-down to start a speed run
 
-        private readonly PuzzleModel _puzzleModel = new PuzzleModel();
-        private readonly Stopwatch _solveTimer = new Stopwatch();
-        private readonly Stopwatch _speedRunStopwatch = new Stopwatch();
+        private readonly PuzzleModel _puzzleModel = new();
+        private readonly Stopwatch _solveTimer = new();
+        private readonly Stopwatch _speedRunStopwatch = new();
 
         // UI timer to update elapsed display
         private readonly DispatcherTimer _uiTimer;
@@ -36,7 +36,7 @@ namespace LightsOutCube.ViewModels
         // Event raised when a speed run completes (subscribers can show celebration UI)
         public event EventHandler<SpeedRunSummary> SpeedRunCompleted;
 
-        private readonly List<ScoreRecord> _speedRunRecords = new List<ScoreRecord>();
+        private readonly List<ScoreRecord> _speedRunRecords = [];
         public IReadOnlyList<ScoreRecord> SpeedRunRecords => _speedRunRecords.AsReadOnly();
 
         private int _speedRunSolvedCount;
@@ -68,8 +68,8 @@ namespace LightsOutCube.ViewModels
                 Dispatcher.CurrentDispatcher);
 
             // Load puzzles into the ViewModel
-            Cells = new ObservableCollection<CellViewModel>();
-            CellsByIndex = new Dictionary<int, CellViewModel>();
+            Cells = [];
+            CellsByIndex = [];
 
             using (var stream = OpenPuzzleStream())
             {
@@ -83,7 +83,7 @@ namespace LightsOutCube.ViewModels
                 }
             }
 
-            PuzzleList = new ObservableCollection<int>();
+            PuzzleList = [];
             var n = _puzzleModel.Puzzles.FirstChild;
             for (int i = 0; i < n.ChildNodes.Count; i++)
                 PuzzleList.Add(i + 1);
@@ -110,7 +110,7 @@ namespace LightsOutCube.ViewModels
                 new(Colors.Red),
                 new(Colors.LimeGreen),
                 new(Colors.Cyan),
-                new SolidColorBrush(Colors.Magenta)
+                new(Colors.Magenta)
             };
             SelectedLitBrush = LitBrushes[0];
 
@@ -463,9 +463,16 @@ namespace LightsOutCube.ViewModels
             }
             finally
             {
-                // If the user solved every puzzle in the set during the run, notify listeners so the UI can celebrate.
-                try { SpeedRunCompleted?.Invoke(this, summary); } catch { /* swallow UI event errors */ }
-
+                // Notify listeners that the speed run has ended. If any puzzles were solved, summary describes the run; otherwise it may be null.
+                try
+                {
+                    SpeedRunCompleted?.Invoke(this, summary);
+                }
+                catch (Exception ex)
+                {
+                    // Swallow UI event errors to avoid impacting core logic, but log them for diagnostics.
+                    Debug.WriteLine($"Error in SpeedRunCompleted event handler: {ex}");
+                }
             }
         }
 

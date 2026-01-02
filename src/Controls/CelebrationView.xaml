@@ -39,7 +39,9 @@
             <StackPanel>
               <Button x:Name="CloseButton" Foreground="White" Height="30"
                                 Style="{StaticResource RoundedButtonStyle}"
-                                Width="84" Padding="6,4" Margin="6,0,0,0" Click="CloseButton_Click">Close</Button>
+                                Width="84" Padding="6,4" Margin="6,0,0,0"
+                                AutomationProperties.Name="Close celebration dialog" 
+                                Click="CloseButton_Click">Close</Button>
             </StackPanel>
           </Border>
             <Canvas x:Name="RibbonCanvas" Grid.Row="0" IsHitTestVisible="False" Panel.ZIndex="2" />

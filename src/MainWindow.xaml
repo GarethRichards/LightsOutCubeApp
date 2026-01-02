@@ -24,7 +24,24 @@
     </Window.Resources>
     <DockPanel>
         <Grid Name="MainGrid">
-            <Viewport3D Name="CubeViewport" Focusable="True" IsHitTestVisible="True" ClipToBounds="True" Grid.Column="0" Grid.Row="0">
+            <Viewport3D Name="CubeViewport" 
+                        Focusable="True" 
+                        IsHitTestVisible="True" 
+                        ClipToBounds="True" 
+                        Grid.Column="0" 
+                        Grid.Row="0">
+                <Viewport3D.Width>
+                    <MultiBinding Converter="{StaticResource MinValueConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
+                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Viewport3D.Width>
+                <Viewport3D.Height>
+                    <MultiBinding Converter="{StaticResource MinValueConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
+                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Viewport3D.Height>
                 <Viewport3D.Camera>
                     <PerspectiveCamera x:Name="CubeCamera" Position="0,0,-8" UpDirection="0,1,0" LookDirection="0,0,1" FieldOfView="45" NearPlaneDistance="0.125"/>
                 </Viewport3D.Camera>
@@ -225,7 +242,7 @@
                     IsHitTestVisible="False"
                     >
                 <StackPanel HorizontalAlignment="Center">
-                    <TextBlock Text="LightsOut Cube"
+                    <TextBlock Text="Lights Out Cube"
                                FontSize="28"
                                FontWeight="Bold"
                                Foreground="White"

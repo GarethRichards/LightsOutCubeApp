@@ -1,12 +1,12 @@
+using LightsOutCube.Model;
+using LightsOutCube.Utilities;
+using LightsOutCube.ViewModels;
 using System;
 using System.Collections;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using LightsOutCube.Model;
-using LightsOutCube.ViewModels;
-using System.Globalization;
-using LightsOutCube.Utilities;
 
 namespace LightsOutCube.Controls
 {

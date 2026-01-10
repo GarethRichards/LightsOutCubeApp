@@ -147,7 +147,7 @@ namespace LightsOutCube.Model
                                 // first corner of a pair; may optionally press based on cornerMask
                                 if ((cornerMask & cpow2) != 0)
                                 {
-                                    LightsOutCubeModel.Tog5(_middle[j][0],ref c);
+                                    LightsOutCubeModel.Tog5(_middle[j][0], ref c);
                                     sol ^= _mid[j][0];
                                     nbuts++;
                                 }

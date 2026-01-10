@@ -4,12 +4,12 @@ using LightsOutCube.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Diagnostics;
 using System.Windows.Threading;
 
 namespace LightsOutCube.ViewModels
@@ -320,7 +320,7 @@ namespace LightsOutCube.ViewModels
             PressCount++;
 
             _puzzleModel.Toggle(buttonIndex);
-            _solutionMask ^= 1L << buttonIndex; 
+            _solutionMask ^= 1L << buttonIndex;
             SetCube();
         }
 
@@ -446,7 +446,7 @@ namespace LightsOutCube.ViewModels
                     summary = new SpeedRunSummary
                     {
                         Timestamp = DateTimeOffset.UtcNow,
-                        LastPuzzleSolved = _speedRunRecords[_speedRunRecords.Count-1].PuzzleId,
+                        LastPuzzleSolved = _speedRunRecords[_speedRunRecords.Count - 1].PuzzleId,
                         TimesMs = _speedRunRecords.Select(r => (long)r.Duration.TotalMilliseconds).ToList(),
                         PressCounts = _speedRunRecords.Select(r => r.PressCount).ToList(),
                         IsPerfect = _speedRunRecords.Select(r => r.IsPerfect).ToList(),
@@ -623,7 +623,7 @@ namespace LightsOutCube.ViewModels
             {
                 _solveTimer.Stop();
                 var elapsed = _solveTimer.Elapsed;
-                if (ShowSolution ||  elapsed == TimeSpan.Zero)
+                if (ShowSolution || elapsed == TimeSpan.Zero)
                     return null;
                 int presses = this.PressCount; // already tracked in your VM
                 // Determine perfect: prefer comparing to minimal moves if solver exposes it:

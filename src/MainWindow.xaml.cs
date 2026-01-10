@@ -7,13 +7,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq; // added for resource key discovery
-using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace LightsOutCube
@@ -130,7 +128,7 @@ namespace LightsOutCube
             {
                 // existing visual celebration (banner + cube rotation)
                 try { ShowSolvedEffects(); } catch { /* ignore */ }
-                
+
                 // Play celebratory audio if available (fall back to startup sound if not)
                 try
                 {
@@ -270,7 +268,7 @@ namespace LightsOutCube
                 // Update any currently lit cells to the new material
                 if (_viewModel?.CellsByIndex == null)
                     return;
-                
+
                 foreach (var kvp in _cubesByIndex)
                 {
                     var idx = kvp.Key;
@@ -278,9 +276,9 @@ namespace LightsOutCube
                     if (model3D == null) continue;
                     _viewModel.CellsByIndex.TryGetValue(idx, out var cell);
                     model3D.Material = cell.IsOn ? _litMaterial : _offTransparentMaterial;
-                        
+
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -320,7 +318,7 @@ namespace LightsOutCube
                 _cellHandlers[index] = handler;
             }
         }
-        
+
 
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -742,7 +740,7 @@ namespace LightsOutCube
                 _startupPlayer.MediaOpened += StartupPlayer_MediaOpened;
                 _startupPlayer.MediaEnded += StartupPlayer_MediaEnded;
                 _startupPlayer.MediaFailed += StartupPlayer_MediaFailed;
-                
+
                 _startupPlayer.Open(new Uri(tempPath, UriKind.Absolute));
                 _startupPlayer.Volume = 0.75;
             }
@@ -779,7 +777,7 @@ namespace LightsOutCube
                     _startupPlayer.MediaOpened -= StartupPlayer_MediaOpened;
                     _startupPlayer.MediaEnded -= StartupPlayer_MediaEnded;
                     _startupPlayer.MediaFailed -= StartupPlayer_MediaFailed;
-                    
+
                     _startupPlayer.Stop();
                     _startupPlayer.Close();
                 }
@@ -812,7 +810,7 @@ namespace LightsOutCube
                 // cancel previous display first
                 CancelSolutionDisplay();
                 StartFlashForModel();
-                
+
             }
             catch (Exception ex)
             {
@@ -846,7 +844,7 @@ namespace LightsOutCube
             catch
             {
                 try { _solutionTimer?.Stop(); } catch { /* ignore error */ }
-                _solutionTimer = null; 
+                _solutionTimer = null;
                 _solutionLit = false;
             }
         }

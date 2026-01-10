@@ -1,9 +1,9 @@
+using LightsOutCube.Model;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using LightsOutCube.Model;
-using System.Reflection;
 using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
 
 namespace LightsOutCube.ViewModels
 {
@@ -18,7 +18,7 @@ namespace LightsOutCube.ViewModels
             {
                 if (!string.IsNullOrEmpty(_version))
                     return _version;
-                
+
                 try
                 {
                     var asm = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();

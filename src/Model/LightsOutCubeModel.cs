@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace LightsOutCube.Model
 {
@@ -72,13 +70,13 @@ namespace LightsOutCube.Model
             return (i + Offsets[i % 20, j]) % 60;
         }
 
-        public static void Tog1(int index,ref long loc)
+        public static void Tog1(int index, ref long loc)
         {
             Init();
             loc ^= aTog1[index];
         }
 
-        public static void Tog5(int index,ref long loc)
+        public static void Tog5(int index, ref long loc)
         {
             Init();
             loc ^= aTog5[index];

@@ -73,6 +73,9 @@
   </ItemGroup>
   
   <ItemGroup>
+  </ItemGroup>
+  
+  <ItemGroup>
     <Resource Include="Resources\MainIcon.ico" />
   </ItemGroup>
   

@@ -1,5 +1,4 @@
-﻿using LightsOutCube.ViewModels;
-using System;
+﻿using System;
 using System.IO;
 using System.Xml;
 

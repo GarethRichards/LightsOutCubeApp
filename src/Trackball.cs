@@ -17,11 +17,9 @@
 //------------------------------------------------------------------
 
 using System;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
-using System.Windows.Markup;
 
 namespace _3DTools
 {

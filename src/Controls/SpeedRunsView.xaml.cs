@@ -1,11 +1,11 @@
+using LightsOutCube.ViewModels;
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
-using LightsOutCube.ViewModels;
-using System.Diagnostics;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace LightsOutCube.Controls
 {
@@ -93,10 +93,10 @@ namespace LightsOutCube.Controls
         {
             try
             {
-            // compute offsets so item top aligns with viewport top
+                // compute offsets so item top aligns with viewport top
 
-            // position worst item at top (start)
-            var worstPoint = worstTvi.TransformToAncestor(scroll).Transform(new Point(0, 0));
+                // position worst item at top (start)
+                var worstPoint = worstTvi.TransformToAncestor(scroll).Transform(new Point(0, 0));
                 double startOffset = scroll.VerticalOffset + worstPoint.Y;
                 // apply start offset immediately
                 scroll.ScrollToVerticalOffset(startOffset);

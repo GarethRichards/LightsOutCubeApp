@@ -5,6 +5,7 @@
 
   <!-- to -->
   <TargetFramework>net10.0-windows</TargetFramework>
+  <RuntimeIdentifiers>win-x86</RuntimeIdentifiers>
   <UseWPF>true</UseWPF>
 
     <!-- let MSBuild generate assembly info and populate versions from GitVersion -->
@@ -70,6 +71,9 @@
     <None Remove="Resources\Side4.png" />
     <None Remove="Resources\Side5.png" />
     <None Remove="Resources\Side6.png" />
+  </ItemGroup>
+  
+  <ItemGroup>
   </ItemGroup>
   
   <ItemGroup>

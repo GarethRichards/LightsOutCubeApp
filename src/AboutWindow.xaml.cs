@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using System.Windows.Controls;
-using System.Diagnostics;
-using System.Windows.Navigation;
 using LightsOutCube.ViewModels;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Navigation;
 
 namespace LightsOutCube
 {
@@ -61,7 +58,7 @@ namespace LightsOutCube
             string sortBy = header.Tag as string;
             if (string.IsNullOrEmpty(sortBy) && header.Column.DisplayMemberBinding is Binding b && b.Path != null)
                 sortBy = b.Path.Path;
-            
+
             if (string.IsNullOrEmpty(sortBy)) return;
 
             // find the ListView that owns this header

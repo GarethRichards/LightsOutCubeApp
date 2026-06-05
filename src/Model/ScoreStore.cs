@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
-using System.Text;
-using System.Threading;
 
 namespace LightsOutCube.Model
 {
@@ -247,7 +245,7 @@ namespace LightsOutCube.Model
                     var ser = new DataContractJsonSerializer(typeof(ScoreStats));
                     var stats = (ScoreStats)ser.ReadObject(stream);
                     if (stats?.SpeedRuns != null)
-                            return stats.SpeedRuns;
+                        return stats.SpeedRuns;
                 }
                 catch
                 {

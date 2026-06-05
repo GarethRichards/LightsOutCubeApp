@@ -20,11 +20,11 @@ jobs:
       - name: Setup MSBuild (Visual Studio)
         uses: microsoft/setup-msbuild@v1
 
-      - name: Restore NuGet packages
-        run: nuget restore LightsOutCube.sln
+      - name: Restore packages
+        run: dotnet restore .\LightsOutCube.sln
 
       - name: Build solution (Release)
-        run: msbuild LightsOutCube.sln /p:Configuration=Release /m
+        run: dotnet build .\LightsOutCube.sln --configuration Release --no-restore
 
       - name: Run unit tests (vstest)
         shell: pwsh

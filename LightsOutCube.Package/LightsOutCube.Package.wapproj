@@ -20,13 +20,13 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1702</NoWarn>
-    <EntryPointProjectUniqueName>D:\Users\Gareth\source\LightsOutCubeApp\src\LightsOutCube.csproj</EntryPointProjectUniqueName>
+    <EntryPointProjectUniqueName>..\src\LightsOutCube.csproj</EntryPointProjectUniqueName>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
-    <AppInstallerUri>D:\Users\Gareth\source\LightsOutCubeApp\src\Installer</AppInstallerUri>
+    <AppInstallerUri>..\src\Installer</AppInstallerUri>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
   </PropertyGroup>
@@ -94,6 +94,6 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="D:\Users\Gareth\source\LightsOutCubeApp\src\LightsOutCube.csproj" />
+    <ProjectReference Include="..\src\LightsOutCube.csproj" />
   </ItemGroup>
 </Project>

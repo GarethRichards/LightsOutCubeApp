@@ -20,15 +20,15 @@ jobs:
       - name: Setup MSBuild (Visual Studio)
         uses: microsoft/setup-msbuild@v1
 
-      - name: Restore packages
-        run: dotnet restore .\LightsOutCube.sln
-
-      - name: Build solution (Release)
-        run: dotnet build .\LightsOutCube.sln --configuration Release --no-restore
-
-      - name: Run unit tests (vstest)
+      - name: Restore app
+        run: dotnet restore .\src\LightsOutCube.csproj
+      
+      - name: Build app (Release)
+        run: dotnet build .\src\LightsOutCube.csproj --configuration Release --no-restore
+      
+      - name: Run tests
         shell: pwsh
-        run: dotnet test .\LightsOutCube.sln --configuration Release --no-build
+        run: dotnet test .\tests\LightsOutCube.Tests\LightsOutCube.Tests.csproj --configuration Release --no-build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

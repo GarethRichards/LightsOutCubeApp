@@ -18,6 +18,7 @@
     <InformationalVersion>$(GitVersion_NuGetVersionV2)</InformationalVersion>
     <Version>$(GitVersion_NuGetVersionV2)</Version>
     <GitVersionFileExe>dotnet exec --roll-forward Major &quot;$([MSBuild]::EnsureTrailingSlash($(NuGetPackageRoot)))gitversion.msbuild/$(GitVersionMsBuildVersion)/tools/$(GitVersionToolFramework)/gitversion.dll&quot;</GitVersionFileExe>
+    <GitVersionAssemblyFile>$([MSBuild]::EnsureTrailingSlash($(NuGetPackageRoot)))gitversion.msbuild/$(GitVersionMsBuildVersion)/tools/$(GitVersionToolFramework)/GitVersion.MsBuild.dll</GitVersionAssemblyFile>
 
     <!-- metadata -->
     <AssemblyName>LightsOutCube</AssemblyName>

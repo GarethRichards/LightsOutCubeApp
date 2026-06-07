@@ -30,7 +30,7 @@ jobs:
       
       - name: Run tests
         shell: pwsh
-        run: dotnet test .\LightsOutCube.Tests\LightsOutCube.Tests.csproj --configuration Release --no-build
+        run: dotnet test .\LightsOutCube.Tests\LightsOutCube.Tests.csproj --configuration Release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

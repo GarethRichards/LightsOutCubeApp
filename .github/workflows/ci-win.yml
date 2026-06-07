@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
@@ -20,22 +22,15 @@ jobs:
       - name: Setup MSBuild (Visual Studio)
         uses: microsoft/setup-msbuild@v1
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            9.0.x
-            10.0.x
-
-      - name: Restore NuGet packages
-        run: nuget restore LightsOutCube.sln
-
-      - name: Build solution (Release)
-        run: msbuild LightsOutCube.sln /p:Configuration=Release /m
-
-      - name: Run unit tests (vstest)
+      - name: Restore app
+        run: dotnet restore .\src\LightsOutCube.csproj
+      
+      - name: Build app (Release)
+        run: dotnet build .\src\LightsOutCube.csproj --configuration Release --no-restore
+      
+      - name: Run tests
         shell: pwsh
-        run: dotnet test .\LightsOutCube.sln --configuration Release --no-build
+        run: dotnet test .\LightsOutCube.Tests\LightsOutCube.Tests.csproj --configuration Release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
